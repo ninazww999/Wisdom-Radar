@@ -183,13 +183,27 @@ export class NewsController {
           {
             role: 'user' as const,
             content: `标题：${title}
-摘要：${summary || '暂无摘要'}
 
-请生成详细内容分析：`
+请生成内容分析：`
           }
         ];
         
         const response = await llmClient.invoke(messages, { temperature: 0.7 });
+        
+        // 解析LLM返回的JSON
+        let llmSummary = summary || '';
+        let llmContent = response.content;
+        
+        try {
+          const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            llmSummary = parsed.summary || summary || '';
+            llmContent = parsed.content || response.content;
+          }
+        } catch (parseError) {
+          console.error('Parse LLM response error:', parseError);
+        }
         
         const relatedNews = await this.getRelatedNews(title);
         
@@ -199,8 +213,8 @@ export class NewsController {
           source: '行业资讯',
           publishTime: new Date().toISOString().split('T')[0],
           category: category || 'policy',
-          summary: summary || '',
-          content: response.content,
+          summary: llmSummary,
+          content: llmContent,
           relatedNews
         };
       } catch (error) {
@@ -224,14 +238,18 @@ export class NewsController {
   // 根据分类获取不同的系统提示词（原文内容不需要包含八维通分析）
   private getSystemPrompt(category: string): string {
     return `你是一位专业的具身智能和空间智能领域分析师。
-请根据提供的资讯标题和摘要，生成详细的内容解读。
+请根据提供的资讯标题，生成专业的内容分析。
 
-输出要求：
-1. 直接输出资讯解读内容，不要添加任何标题或前缀
-2. 包含背景、主要内容和行业影响分析（200-300字）
-3. 不要使用 Markdown 格式，直接输出纯文本
-4. 语言要专业、客观
-5. 不要包含针对特定公司的分析或建议`;
+请直接输出JSON格式，不要包含代码块标记：
+{
+  "summary": "50-80字的简要总结，概括核心要点",
+  "content": "200-300字的详细解读，包含背景、主要内容和行业影响"
+}
+
+要求：
+1. summary必须是独立的归纳总结，不是截取原文片段
+2. 内容要专业、客观，不要针对特定公司分析
+3. 不要使用Markdown格式，输出纯文本`;
   }
 
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {
