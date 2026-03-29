@@ -6,7 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Bookmark, Share2, Sparkles, FileText } from 'lucide-react-taro'
+import { 
+  ArrowLeft, 
+  Bookmark, 
+  Share2, 
+  Sparkles, 
+  FileText,
+  TrendingUp,
+  Lightbulb,
+  ChevronRight
+} from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
 
@@ -39,10 +48,10 @@ const categoryLabels = {
 }
 
 const categoryColors = {
-  policy: 'bg-red-500',
-  industry: 'bg-orange-500',
-  technology: 'bg-green-500',
-  market: 'bg-purple-500'
+  policy: 'bg-gradient-to-r from-rose-500 to-pink-500',
+  industry: 'bg-gradient-to-r from-amber-500 to-orange-500',
+  technology: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+  market: 'bg-gradient-to-r from-violet-500 to-purple-500'
 }
 
 const DetailPage: FC = () => {
@@ -115,9 +124,9 @@ const DetailPage: FC = () => {
 
   if (loading) {
     return (
-      <View className="flex flex-col h-full bg-gray-50">
+      <View className="min-h-screen bg-gray-950">
         <View className="flex items-center justify-center h-96">
-          <Text className="text-gray-400">加载中...</Text>
+          <Text className="text-gray-500 text-sm">加载中...</Text>
         </View>
       </View>
     )
@@ -125,124 +134,142 @@ const DetailPage: FC = () => {
 
   if (!detail) {
     return (
-      <View className="flex flex-col h-full bg-gray-50">
+      <View className="min-h-screen bg-gray-950">
         <View className="flex items-center justify-center h-96">
-          <Text className="text-gray-400">内容不存在</Text>
+          <Text className="text-gray-500 text-sm">内容不存在</Text>
         </View>
       </View>
     )
   }
 
   return (
-    <View className="flex flex-col h-full bg-gray-50">
-      {/* Header */}
-      <View className="bg-white px-4 py-3 flex items-center border-b border-gray-200">
-        <View className="w-10 h-10 flex items-center justify-center">
-          <ArrowLeft size={20} color="#6b7280" />
+    <View className="min-h-screen bg-gray-950">
+      {/* Header with Gradient */}
+      <View className="bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 px-5 py-4 relative">
+        <View className="flex items-center gap-4">
+          <View className="w-10 h-10 rounded-full bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center">
+            <ArrowLeft size={20} color="#ffffff" />
+          </View>
+          <Text className="flex-1 text-white font-semibold">资讯详情</Text>
+          <View className="w-10 h-10" />
         </View>
-        <Text className="flex-1 text-center text-base font-semibold text-gray-900">资讯详情</Text>
-        <View className="w-10 h-10" />
       </View>
 
       {/* Content */}
-      <ScrollView scrollY className="flex-1">
-        <View className="p-4">
-          {/* Title */}
-          <Text className="block text-xl font-bold text-gray-900 mb-3">{detail.title}</Text>
-          
-          {/* Meta */}
-          <View className="flex items-center gap-2 mb-4">
-            <Badge className={`${categoryColors[detail.category]} text-white text-xs`}>
-              {categoryLabels[detail.category]}
-            </Badge>
-            <Text className="text-xs text-gray-500">{detail.source}</Text>
-            <Text className="text-xs text-gray-400">·</Text>
-            <Text className="text-xs text-gray-500">{detail.publishTime}</Text>
-          </View>
+      <ScrollView scrollY className="flex-1 px-5 py-4">
+        {/* Title */}
+        <Text className="text-white text-xl font-bold mb-4 leading-relaxed">{detail.title}</Text>
+        
+        {/* Meta */}
+        <View className="flex items-center gap-3 mb-4">
+          <Badge className={`${categoryColors[detail.category]} text-white text-xs px-3 py-1 rounded-full border-0`}>
+            {categoryLabels[detail.category]}
+          </Badge>
+          <Text className="text-gray-500 text-xs">{detail.source}</Text>
+          <Text className="text-gray-600 text-xs">•</Text>
+          <Text className="text-gray-500 text-xs">{detail.publishTime}</Text>
+        </View>
 
-          {/* Summary */}
-          <Card className="mb-4">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-700 flex items-center gap-2">
-                <FileText size={16} color="#2563eb" />
-                摘要
+        {/* Summary Card */}
+        <Card className="mb-4 bg-gray-900 border-gray-800 rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-gray-300 text-sm flex items-center gap-2">
+              <FileText size={16} color="#8b5cf6" />
+              摘要
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Text className="text-gray-400 text-sm leading-relaxed">{detail.summary}</Text>
+          </CardContent>
+        </Card>
+
+        {/* Content Card */}
+        <Card className="mb-4 bg-gray-900 border-gray-800 rounded-2xl">
+          <CardContent className="py-4">
+            <Text className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
+          </CardContent>
+        </Card>
+
+        {/* AI Analysis */}
+        {aiAnalysis ? (
+          <Card className="mb-4 bg-gradient-to-r from-violet-600 to-purple-600 border-none rounded-2xl overflow-hidden relative">
+            <View className="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-10 -mt-10" />
+            <CardHeader className="pb-2 relative z-10">
+              <CardTitle className="text-white text-sm flex items-center gap-2">
+                <Sparkles size={16} color="#ffffff" />
+                AI 智能解读
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
-              <Text className="text-sm text-gray-600 leading-relaxed">{detail.summary}</Text>
-            </CardContent>
-          </Card>
-
-          {/* Content */}
-          <Card className="mb-4">
-            <CardContent className="pt-4">
-              <Text className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
-            </CardContent>
-          </Card>
-
-          {/* AI Analysis */}
-          {aiAnalysis ? (
-            <Card className="mb-4 bg-blue-50 border-blue-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-blue-700 flex items-center gap-2">
-                  <Sparkles size={16} color="#2563eb" />
-                  AI 智能解读
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 space-y-3">
-                <View>
-                  <Text className="text-xs text-blue-600 font-semibold mb-1">关键要点</Text>
-                  {aiAnalysis.keyPoints.map((point, idx) => (
-                    <Text key={idx} className="block text-xs text-gray-600 mb-1">• {point}</Text>
-                  ))}
+            <CardContent className="pt-0 relative z-10">
+              {/* Key Points */}
+              <View className="mb-4">
+                <View className="flex items-center gap-2 mb-2">
+                  <TrendingUp size={14} color="#22d3ee" />
+                  <Text className="text-cyan-300 text-xs font-semibold">关键要点</Text>
                 </View>
-                <View>
-                  <Text className="text-xs text-blue-600 font-semibold mb-1">影响分析</Text>
-                  <Text className="text-xs text-gray-600">{aiAnalysis.impact}</Text>
-                </View>
-                <View>
-                  <Text className="text-xs text-blue-600 font-semibold mb-1">决策建议</Text>
-                  <Text className="text-xs text-gray-600">{aiAnalysis.recommendation}</Text>
-                </View>
-              </CardContent>
-            </Card>
-          ) : (
-            <Button
-              className="w-full mb-4 bg-blue-600 text-white"
-              onClick={generateAiAnalysis}
-              disabled={aiLoading}
-            >
-              <View className="flex items-center gap-2">
-                <Sparkles size={16} color="#ffffff" />
-                <Text>{aiLoading ? 'AI 分析中...' : 'AI 智能解读'}</Text>
+                {aiAnalysis.keyPoints.map((point, idx) => (
+                  <View key={idx} className="flex gap-2 mb-2">
+                    <View className="w-2 h-2 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
+                    <Text className="text-gray-100 text-xs leading-relaxed">{point}</Text>
+                  </View>
+                ))}
               </View>
-            </Button>
-          )}
 
-          <Separator className="my-4" />
+              {/* Impact */}
+              <View className="mb-4">
+                <View className="flex items-center gap-2 mb-2">
+                  <Lightbulb size={14} color="#fbbf24" />
+                  <Text className="text-amber-300 text-xs font-semibold">影响分析</Text>
+                </View>
+                <Text className="text-gray-100 text-xs leading-relaxed">{aiAnalysis.impact}</Text>
+              </View>
 
-          {/* Related News */}
-          {detail.relatedNews.length > 0 && (
-            <View>
-              <Text className="block text-base font-semibold text-gray-900 mb-3">相关推荐</Text>
-              {detail.relatedNews.map((news, idx) => (
-                <Card key={idx} className="mb-2">
-                  <CardContent className="py-3">
-                    <Text className="text-sm text-gray-700 mb-1">{news.title}</Text>
-                    <View className="flex items-center gap-2">
-                      <Text className="text-xs text-gray-500">{news.source}</Text>
-                      <Text className="text-xs text-gray-400">·</Text>
-                      <Text className="text-xs text-gray-500">{news.publishTime}</Text>
-                    </View>
-                  </CardContent>
-                </Card>
-              ))}
+              {/* Recommendation */}
+              <View>
+                <View className="flex items-center gap-2 mb-2">
+                  <ChevronRight size={14} color="#34d399" />
+                  <Text className="text-emerald-300 text-xs font-semibold">决策建议</Text>
+                </View>
+                <Text className="text-gray-100 text-xs leading-relaxed">{aiAnalysis.recommendation}</Text>
+              </View>
+            </CardContent>
+          </Card>
+        ) : (
+          <Button
+            className="w-full mb-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl h-12 border-0"
+            onClick={generateAiAnalysis}
+            disabled={aiLoading}
+          >
+            <View className="flex items-center gap-2">
+              <Sparkles size={18} color="#ffffff" />
+              <Text className="font-medium">{aiLoading ? 'AI 分析中...' : 'AI 智能解读'}</Text>
             </View>
-          )}
-        </View>
+          </Button>
+        )}
+
+        <Separator className="my-5 bg-gray-800" />
+
+        {/* Related News */}
+        {detail.relatedNews.length > 0 && (
+          <View>
+            <Text className="text-white text-base font-semibold mb-4">相关推荐</Text>
+            {detail.relatedNews.map((news, idx) => (
+              <Card key={idx} className="mb-3 bg-gray-900 border-gray-800 rounded-2xl overflow-hidden">
+                <CardContent className="py-4 px-4">
+                  <Text className="text-gray-200 text-sm mb-2 leading-relaxed">{news.title}</Text>
+                  <View className="flex items-center gap-2">
+                    <Text className="text-gray-500 text-xs">{news.source}</Text>
+                    <Text className="text-gray-600 text-xs">•</Text>
+                    <Text className="text-gray-500 text-xs">{news.publishTime}</Text>
+                  </View>
+                </CardContent>
+              </Card>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
-      {/* Bottom Actions */}
+      {/* Bottom Actions with Glass Effect */}
       <View 
         style={{
           position: 'fixed',
@@ -252,26 +279,27 @@ const DetailPage: FC = () => {
           display: 'flex',
           flexDirection: 'row',
           gap: '12px',
-          padding: '12px 16px',
-          backgroundColor: '#ffffff',
-          borderTop: '1px solid #e5e7eb'
+          padding: '16px 20px',
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid #1f2937'
         }}
       >
         <Button
-          className="flex-1 bg-white border border-gray-300 text-gray-700"
+          className="flex-1 bg-gray-800 border-gray-700 text-gray-300 rounded-2xl h-12"
           onClick={handleBookmark}
         >
           <View className="flex items-center gap-2">
-            <Bookmark size={16} color={isBookmarked ? '#2563eb' : '#6b7280'} />
+            <Bookmark size={18} color={isBookmarked ? '#8b5cf6' : '#9ca3af'} />
             <Text>{isBookmarked ? '已收藏' : '收藏'}</Text>
           </View>
         </Button>
         <Button
-          className="flex-1 bg-blue-600 text-white"
+          className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl h-12 border-0"
           onClick={handleShare}
         >
           <View className="flex items-center gap-2">
-            <Share2 size={16} color="#ffffff" />
+            <Share2 size={18} color="#ffffff" />
             <Text>分享</Text>
           </View>
         </Button>

@@ -6,16 +6,16 @@ export default defineAppConfig({
     'pages/profile/index'
   ],
   window: {
-    backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#ffffff',
+    backgroundTextStyle: 'dark',
+    navigationBarBackgroundColor: '#030712',
     navigationBarTitleText: '具身智能资讯',
-    navigationBarTextStyle: 'black'
+    navigationBarTextStyle: 'white'
   },
   tabBar: {
-    color: '#9ca3af',
-    selectedColor: '#2563eb',
-    backgroundColor: '#ffffff',
-    borderStyle: 'black',
+    color: '#6b7280',
+    selectedColor: '#8b5cf6',
+    backgroundColor: '#030712',
+    borderStyle: 'white',
     list: [
       {
         pagePath: 'pages/index/index',
