@@ -77,7 +77,7 @@ const ProfilePage: FC = () => {
               </View>
               <View className="flex-1">
                 <Text className="text-white font-medium">{profile.nickname}</Text>
-                <Text className="text-neutral-500 text-sm">具身智能资讯助手</Text>
+                <Text className="text-neutral-500 text-sm">智界雷达</Text>
               </View>
             </View>
           </CardContent>

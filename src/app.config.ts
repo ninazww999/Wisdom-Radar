@@ -8,7 +8,7 @@ export default defineAppConfig({
   window: {
     backgroundTextStyle: 'dark',
     navigationBarBackgroundColor: '#030712',
-    navigationBarTitleText: '具身智能资讯',
+    navigationBarTitleText: '智界雷达',
     navigationBarTextStyle: 'white'
   },
   tabBar: {

@@ -48,7 +48,7 @@ const AnalysisPage: FC = () => {
       {/* Header */}
       <View className="px-4 pt-6 pb-4">
         <Text className="text-white text-xl font-bold">数据分析</Text>
-        <Text className="text-neutral-500 text-sm mt-1">具身智能领域资讯洞察</Text>
+        <Text className="text-neutral-500 text-sm mt-1">智界雷达数据洞察</Text>
       </View>
 
       {/* Content */}

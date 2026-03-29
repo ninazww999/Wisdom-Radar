@@ -152,7 +152,7 @@ const IndexPage: FC = () => {
         <View className="flex items-center justify-between">
           <View>
             <Text className="text-neutral-500 text-xs">{getTodayDate()}</Text>
-            <Text className="text-white text-xl font-bold mt-1">具身智能资讯</Text>
+            <Text className="text-white text-xl font-bold mt-1">智界雷达</Text>
           </View>
           <View 
             className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
