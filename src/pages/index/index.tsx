@@ -3,7 +3,7 @@ import Taro, { useLoad, useDidShow, usePullDownRefresh, useShareAppMessage, useS
 import { useState, useRef } from 'react'
 import type { FC } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw } from 'lucide-react-taro'
+import { RefreshCw, Sparkles } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
 
@@ -16,6 +16,7 @@ interface NewsItem {
   category: 'policy' | 'industry' | 'technology' | 'market'
   isHot?: boolean
   url?: string
+  bawitonInsight?: string
 }
 
 interface NewsResponse {
@@ -158,15 +159,49 @@ const IndexPage: FC = () => {
 
   // 按分类分组资讯，每个维度只取3条
   const getGroupedNews = () => {
-    const hotNews = newsList.filter(item => item.isHot || item.category === 'technology').slice(0, 3)
-    const policyNews = newsList.filter(item => item.category === 'policy').slice(0, 3)
-    const industryNews = newsList.filter(item => item.category === 'industry').slice(0, 3)
-    const marketNews = newsList.filter(item => item.category === 'market').slice(0, 3)
+    const hotNews = newsList.filter(item => item.isHot).slice(0, 3)
+    const policyNews = newsList.filter(item => item.category === 'policy' && !item.isHot).slice(0, 3)
+    const industryNews = newsList.filter(item => item.category === 'industry' && !item.isHot).slice(0, 3)
+    const marketNews = newsList.filter(item => item.category === 'market' && !item.isHot).slice(0, 3)
     
     return { hotNews, policyNews, industryNews, marketNews }
   }
 
   const { hotNews, policyNews, industryNews, marketNews } = getGroupedNews()
+
+  // 渲染热点资讯卡片 - 详细样式
+  const renderHotNewsCard = (news: NewsItem) => (
+    <View 
+      key={news.id} 
+      className="mb-3 bg-neutral-900 rounded-lg p-4 border border-neutral-800"
+      onClick={() => handleNewsClick(news)}
+    >
+      {/* 标题 */}
+      <Text className="text-white font-medium text-base leading-relaxed block mb-2">
+        {news.title}
+      </Text>
+      
+      {/* 来源和时间 */}
+      <View className="flex items-center gap-2 mb-3">
+        <Text className="text-neutral-500 text-xs">{news.source}</Text>
+        <Text className="text-neutral-700 text-xs">·</Text>
+        <Text className="text-neutral-500 text-xs">{formatTime(news.publishTime)}</Text>
+      </View>
+      
+      {/* 八维通洞察 */}
+      {news.bawitonInsight && (
+        <View className="bg-neutral-800 bg-opacity-50 rounded-lg p-3">
+          <View className="flex items-center gap-1 mb-2">
+            <Sparkles size={12} color="#10a37f" />
+            <Text className="text-emerald-400 text-xs font-medium">八维通洞察</Text>
+          </View>
+          <Text className="text-neutral-300 text-sm leading-relaxed">
+            {news.bawitonInsight}
+          </Text>
+        </View>
+      )}
+    </View>
+  )
 
   // 渲染单条资讯 - 简洁样式
   const renderNewsItem = (news: NewsItem, index: number) => (
@@ -197,8 +232,20 @@ const IndexPage: FC = () => {
   )
 
   // 渲染分组
-  const renderSection = (title: string, icon: string, news: NewsItem[]) => {
+  const renderSection = (title: string, icon: string, news: NewsItem[], isHot: boolean = false) => {
     if (news.length === 0) return null
+    
+    if (isHot) {
+      return (
+        <View className="mb-5 px-4">
+          <View className="flex items-center gap-2 mb-3">
+            <Text className="text-base">{icon}</Text>
+            <Text className="text-white font-medium">{title}</Text>
+          </View>
+          {news.map((item) => renderHotNewsCard(item))}
+        </View>
+      )
+    }
     
     return (
       <View className="mb-5">
@@ -216,6 +263,22 @@ const IndexPage: FC = () => {
   // 加载骨架屏
   const renderSkeleton = () => (
     <View className="px-4">
+      {/* 热点资讯骨架屏 */}
+      <View className="mb-5">
+        <Skeleton className="h-5 w-24 mb-3 bg-neutral-800" />
+        {[1, 2, 3].map((item) => (
+          <View key={item} className="mb-3 bg-neutral-900 rounded-lg p-4 border border-neutral-800">
+            <Skeleton className="h-4 w-full mb-2 bg-neutral-800" />
+            <Skeleton className="h-3 w-24 mb-3 bg-neutral-800" />
+            <View className="bg-neutral-800 bg-opacity-50 rounded-lg p-3">
+              <Skeleton className="h-3 w-20 mb-2 bg-neutral-700" />
+              <Skeleton className="h-3 w-full bg-neutral-700" />
+            </View>
+          </View>
+        ))}
+      </View>
+      
+      {/* 其他分组骨架屏 */}
       {[1, 2, 3].map((section) => (
         <View key={section} className="mb-5">
           <Skeleton className="h-5 w-24 mb-2 bg-neutral-800" />
@@ -280,7 +343,7 @@ const IndexPage: FC = () => {
         renderSkeleton()
       ) : (
         <View className="pt-2">
-          {renderSection('热点资讯', '🔥', hotNews)}
+          {renderSection('热点资讯', '🔥', hotNews, true)}
           {renderSection('政策风向', '📋', policyNews)}
           {renderSection('行业动态', '🏢', industryNews)}
           {renderSection('市场趋势', '📈', marketNews)}

@@ -175,10 +175,38 @@ export class NewsController {
       item.isHot = idx < 3;
     });
     
+    // 为热点资讯生成八维通洞察（前3条）
+    const hotNews = newsList.filter(item => item.isHot);
+    console.log('[News List] Generating insights for', hotNews.length, 'hot news...');
+    
+    try {
+      const llmClient = new LLMClient(new Config());
+      
+      // 并行生成洞察
+      const insightPromises = hotNews.map(news => 
+        this.generateHotNewsInsight(llmClient, news.title, news.summary, news.category)
+      );
+      
+      const insights = await Promise.all(insightPromises);
+      
+      // 将洞察添加到热点资讯
+      hotNews.forEach((news, idx) => {
+        if (insights[idx]) {
+          (news as any).bawitonInsight = insights[idx];
+        }
+      });
+      
+      console.log('[News List] Generated insights for hot news');
+    } catch (error) {
+      console.error('[News List] Failed to generate insights:', error);
+      // 即使洞察生成失败，也返回资讯列表
+    }
+    
     console.log('[News List] Top items:', newsList.slice(0, 3).map(n => ({ 
       title: n.title.slice(0, 30), 
       date: n.publishTime,
-      source: n.source
+      source: n.source,
+      hasInsight: !!(n as any).bawitonInsight
     })));
     
     return {
@@ -186,6 +214,41 @@ export class NewsController {
       total: newsList.length,
       hasMore: false
     };
+  }
+
+  // 为热点资讯生成简要洞察
+  private async generateHotNewsInsight(
+    llmClient: LLMClient, 
+    title: string, 
+    summary: string,
+    category: string
+  ): Promise<string> {
+    try {
+      const prompt = `你是八维通科技有限公司的行业分析师。八维通是卓越的空间智能服务商，核心业务包括城市数据资产底座、数字孪生、模拟仿真推演、智慧轨交（覆盖40+城市）。
+
+请分析以下具身智能/空间智能领域资讯，用1句话总结核心内容，再用1句话说明对八维通的启发。
+
+资讯标题：${title}
+资讯摘要：${summary}
+
+输出格式（JSON）：
+{"core": "核心内容1句话", "insight": "对八维通的启发1句话"}`;
+
+      const response = await llmClient.invoke([
+        { role: 'user', content: prompt }
+      ], { temperature: 0.7 });
+
+      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
+        return `${result.core} | 启发：${result.insight}`;
+      }
+      
+      return '';
+    } catch (error) {
+      console.error('[Generate Insight] Error:', error);
+      return '';
+    }
   }
 
   // 获取搜索关键词组合 - 确保获取最新最热的资讯
