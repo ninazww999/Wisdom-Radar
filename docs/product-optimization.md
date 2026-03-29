@@ -57,6 +57,25 @@
 - 提升用户粘性
 - 形成个人知识库
 
+#### 4. 分享功能
+**问题**：用户无法将有价值的资讯分享给同事或朋友圈
+
+**方案**：
+- 详情页添加"分享"按钮
+- 支持分享到微信好友和朋友圈
+- 生成分享卡片（标题+摘要+封面图）
+- 首页也支持分享小程序
+
+**技术实现**：
+- 使用 Taro 的 `useShareAppMessage` 实现分享给朋友
+- 使用 `useShareTimeline` 实现分享到朋友圈
+- 创建 `ShareButton` 组件封装原生 Button 的 `openType="share"`
+- 生成分享封面图存放在 `src/assets/share-cover.png`
+
+**效果**：
+- 扩大产品传播
+- 形成口碑效应
+
 ---
 
 ### P1 - 功能完善（1-2周）
@@ -162,11 +181,11 @@
 1. ✅ 详情页默认生成八维通洞察
 2. ✅ 分析页接入真实数据
 3. ✅ 收藏功能实际落地
+4. ✅ 分享功能（分享给好友、分享到朋友圈）
 
 ### 第二阶段（下周）
-4. 智能推送提醒
-5. 资讯搜索功能
-6. 分享功能
+5. 智能推送提醒
+6. 资讯搜索功能
 
 ### 第三阶段（下月）
 7. 决策建议报告
@@ -235,3 +254,42 @@
 - AI分析更贴合八维通业务方向
 - 洞察建议更具可操作性
 - 提升用户对"八维通洞察"的价值感知
+
+### 2024-01-XX: 分享功能实现
+
+#### 背景
+用户需要将有价值的资讯分享给同事或发布到朋友圈，扩大产品传播范围。
+
+#### 优化内容
+1. **实现分享给朋友功能**
+   - 使用 Taro 的 `useShareAppMessage` 钩子
+   - 分享标题格式：`【智界雷达】{资讯标题}`
+   - 分享路径：`/pages/detail/index?id={资讯ID}`
+
+2. **实现分享到朋友圈功能**
+   - 使用 Taro 的 `useShareTimeline` 钩子
+   - 在页面配置中启用 `enableShareTimeline: true`
+
+3. **创建分享按钮组件**
+   - 新建 `src/components/ui/share-button.tsx`
+   - 封装原生 Button 的 `openType="share"` 功能
+   - 小程序环境使用原生 Button，H5 环境显示提示
+
+4. **生成分享封面图**
+   - 使用 AI 生成科技感封面图
+   - 存放在 `src/assets/share-cover.png`
+   - 配置构建时自动复制到 dist 目录
+
+#### 代码修改
+- 新增文件：`src/components/ui/share-button.tsx`
+- 修改文件：`src/pages/detail/index.tsx`（添加分享钩子）
+- 修改文件：`src/pages/detail/index.config.ts`（启用分享配置）
+- 修改文件：`src/pages/index/index.tsx`（添加首页分享）
+- 修改文件：`src/pages/index/index.config.ts`（启用分享配置）
+- 修改文件：`config/index.ts`（配置静态资源复制）
+- 新增资源：`src/assets/share-cover.png`
+
+#### 效果预期
+- 用户可一键分享资讯到微信好友或朋友圈
+- 分享卡片带有品牌封面图，提升传播效果
+- 促进产品口碑传播和用户增长

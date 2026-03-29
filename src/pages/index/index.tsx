@@ -1,5 +1,5 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useLoad, usePullDownRefresh, useReachBottom } from '@tarojs/taro'
+import Taro, { useLoad, usePullDownRefresh, useReachBottom, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useState } from 'react'
 import type { FC } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -47,6 +47,20 @@ const IndexPage: FC = () => {
     console.log('Index page loaded.')
     fetchNews()
   })
+
+  // 分享给朋友
+  useShareAppMessage(() => ({
+    title: '智界雷达 - 具身智能与空间智能专业资讯',
+    path: '/pages/index/index',
+    imageUrl: '/assets/share-cover.png'
+  }))
+
+  // 分享到朋友圈
+  useShareTimeline(() => ({
+    title: '智界雷达 - 具身智能与空间智能专业资讯',
+    query: '',
+    imageUrl: '/assets/share-cover.png'
+  }))
 
   usePullDownRefresh(async () => {
     await handleRefresh()

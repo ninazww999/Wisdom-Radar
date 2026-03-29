@@ -1,10 +1,11 @@
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro, { useLoad, useRouter } from '@tarojs/taro'
+import Taro, { useLoad, useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import type { FC } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { ShareButton } from '@/components/ui/share-button'
 import { 
   ArrowLeft, 
   Bookmark,
@@ -55,6 +56,38 @@ const DetailPage: FC = () => {
 
   useLoad(() => {
     console.log('Detail page loaded.')
+  })
+
+  // 分享给朋友
+  useShareAppMessage(() => {
+    if (!detail) {
+      return {
+        title: '智界雷达 - 具身智能资讯',
+        path: '/pages/index/index',
+        imageUrl: '/assets/share-cover.png'
+      }
+    }
+    return {
+      title: `【智界雷达】${detail.title}`,
+      path: `/pages/detail/index?id=${detail.id}`,
+      imageUrl: '/assets/share-cover.png'
+    }
+  })
+
+  // 分享到朋友圈
+  useShareTimeline(() => {
+    if (!detail) {
+      return {
+        title: '智界雷达 - 具身智能资讯',
+        query: '',
+        imageUrl: '/assets/share-cover.png'
+      }
+    }
+    return {
+      title: `【智界雷达】${detail.title}`,
+      query: `id=${detail.id}`,
+      imageUrl: '/assets/share-cover.png'
+    }
   })
 
   useEffect(() => {
@@ -379,12 +412,13 @@ const DetailPage: FC = () => {
             <Text className="text-neutral-300">{isBookmarked ? '已收藏' : '收藏'}</Text>
           </View>
         </Button>
-        <Button
-          className="flex-1 bg-white text-black rounded-xl h-12 border-0"
-          onClick={() => console.log('Share clicked')}
+        {/* 微信小程序分享按钮 */}
+        <ShareButton
+          className="flex-1 bg-white text-black rounded-xl h-12 border-0 flex items-center justify-center"
+          style={{ padding: 0, lineHeight: '48px' }}
         >
-          <Text className="font-medium">分享</Text>
-        </Button>
+          <Text className="font-medium text-black">分享</Text>
+        </ShareButton>
       </View>
     </View>
   )
