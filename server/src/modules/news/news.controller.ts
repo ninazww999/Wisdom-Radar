@@ -20,22 +20,37 @@ export class NewsController {
     // 使用网络搜索获取实时资讯
     const searchClient = new SearchClient(new Config());
     
+    // 聚焦核心热点新闻和政策，排除科普类文章
     const categoryKeywords: Record<string, string> = {
-      policy: '具身智能 政策 法规 指导意见 2024 2025',
-      industry: '具身智能 行业动态 企业 产品 最新',
-      technology: '具身智能 技术 研发 机器人算法 突破',
-      market: '具身智能 市场 投资 融资 规模 趋势'
+      policy: '具身智能 政策 法规 指导意见 最新发布 2025',
+      industry: '具身智能 行业动态 企业发布 新产品 最新进展 2025',
+      technology: '具身智能 技术突破 研发成果 最新技术 2025',
+      market: '具身智能 市场动态 投资 融资 最新趋势 2025'
     };
     
     const query = category 
-      ? categoryKeywords[category] || '具身智能'
-      : '具身智能 空间智能 政策 技术 行业 市场 最新 2024 2025';
+      ? categoryKeywords[category] || '具身智能 最新动态'
+      : '具身智能 最新新闻 政策发布 技术突破 行业动态 2025';
     
-    // 搜索更多结果以便排序
-    const searchResult = await searchClient.webSearch(query, 20);
+    // 搜索更多结果以便筛选
+    const searchResult = await searchClient.webSearch(query, 30);
+    
+    // 科普类关键词（用于过滤）
+    const excludeKeywords = [
+      '概念', '是什么', '什么是', '入门', '科普', '介绍', '基础', 
+      '原理', '定义', '详解', '全面了解', '一文读懂', '小白', '初学者',
+      '教程', '指南', '如何理解', '解读（非新闻）'
+    ];
+    
+    // 判断是否为科普类文章
+    const isExcluded = (title: string, snippet: string): boolean => {
+      const text = (title + ' ' + snippet).toLowerCase();
+      return excludeKeywords.some(k => text.includes(k.toLowerCase()));
+    };
     
     // 处理并排序资讯列表
     let newsList = (searchResult.web_items || [])
+      .filter(item => !isExcluded(item.title, item.snippet || '')) // 过滤科普类文章
       .map((item, idx) => {
         // 解析发布时间
         let publishDate = new Date();
