@@ -150,10 +150,7 @@ const IndexPage: FC = () => {
       {/* Header */}
       <View className="px-4 pt-8 pb-5">
         <View className="flex items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-white text-2xl font-bold">智界雷达</Text>
-            <Text className="text-neutral-600 text-xs mt-1">{getTodayDate()}</Text>
-          </View>
+          <Text className="text-neutral-300 text-lg font-medium">{getTodayDate()}</Text>
           <View 
             className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
             onClick={handleRefresh}
