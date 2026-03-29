@@ -83,10 +83,14 @@ export class NewsController {
           }
         }
         
+        // 优化摘要：去除开头的残缺内容
+        let summary = item.snippet || '';
+        summary = this.cleanSummary(summary);
+        
         return {
           id: `news-${Date.now()}-${idx}`,
           title: item.title,
-          summary: item.snippet,
+          summary,
           source: item.site_name || '未知来源',
           publishTime: publishDate.toISOString().split('T')[0],
           publishTimestamp: publishDate.getTime(), // 用于排序
@@ -112,6 +116,31 @@ export class NewsController {
       total: newsList.length,
       hasMore: false // 每个分类最多10条
     };
+  }
+
+  // 清理摘要：去除开头的残缺内容
+  private cleanSummary(summary: string): string {
+    if (!summary) return '';
+    
+    // 去除开头的残缺句子（以标点符号开头的片段）
+    // 例如："布。在政策..." -> "在政策..."
+    const punctuationPattern = /^[^\u4e00-\u9fa5a-zA-Z0-9]*[。！？；：，、] */;
+    let cleaned = summary.replace(punctuationPattern, '');
+    
+    // 如果开头是残缺的词语（少于3个字且后面紧跟标点），继续清理
+    const shortFragmentPattern = /^[\u4e00-\u9fa5]{1,2}[。！？；：，、] */;
+    cleaned = cleaned.replace(shortFragmentPattern, '');
+    
+    // 确保摘要以完整句子开头（大写字母或中文开头）
+    // 如果开头是残缺的小写英文单词，也去掉
+    cleaned = cleaned.replace(/^[a-z]+\s+/, '');
+    
+    // 如果清理后为空或太短，返回原始摘要
+    if (cleaned.length < 10) {
+      return summary;
+    }
+    
+    return cleaned;
   }
 
   // 根据内容自动检测分类
