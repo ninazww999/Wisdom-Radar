@@ -64,9 +64,6 @@ const ProfilePage: FC = () => {
       {/* Header - Glass Style */}
       <View 
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
           background: 'rgba(0, 0, 0, 0.6)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
