@@ -18,10 +18,10 @@ export class NewsController {
     
     for (const cat of categories) {
       const keywords = {
-        policy: '具身智能 政策 法规 2025',
-        industry: '具身智能 行业 企业 2025',
-        technology: '具身智能 技术 研发 2025',
-        market: '具身智能 市场 投资 2025'
+        policy: '具身智能 政策 法规 最新',
+        industry: '具身智能 行业 企业 最新',
+        technology: '具身智能 技术 研发 最新',
+        market: '具身智能 市场 投资 最新'
       };
       
       const result = await searchClient.webSearch(keywords[cat], 10);
@@ -29,13 +29,13 @@ export class NewsController {
     }
     
     // 获取热门话题
-    const hotResult = await searchClient.webSearch('具身智能 2025 最新', 20);
+    const hotResult = await searchClient.webSearch('具身智能 人形机器人 最新热点', 20);
     const topics: Record<string, number> = {};
     
     (hotResult.web_items || []).forEach(item => {
       const title = item.title || '';
       // 提取关键词
-      const keywords = ['人形机器人', '具身智能', '空间计算', '多模态', '机器人', 'AI', '大模型', '智能制造', '自动驾驶'];
+      const keywords = ['人形机器人', '具身智能', '空间计算', '多模态', '机器人', 'AI', '大模型', '智能制造', '自动驾驶', '数字孪生'];
       keywords.forEach(kw => {
         if (title.includes(kw)) {
           topics[kw] = (topics[kw] || 0) + 1;
@@ -49,10 +49,8 @@ export class NewsController {
       .map(([topic, count]) => ({ topic, count }));
     
     // 生成趋势数据（模拟最近7天）
-    const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
     const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    const weeklyTrend = weekDays.map((day, idx) => ({
+    const weeklyTrend = weekDays.map((day) => ({
       day,
       count: Math.floor(Math.random() * 30) + 20
     }));
@@ -81,65 +79,51 @@ export class NewsController {
   ) {
     console.log('[GET /api/news/list] params:', { page, pageSize, category });
     
-    const pageNum = parseInt(page, 10) || 1;
-    const pageSizeNum = Math.min(parseInt(pageSize, 10) || 10, 10); // 最多10条
+    const pageSizeNum = Math.min(parseInt(pageSize, 10) || 10, 20);
     
-    // 使用网络搜索获取实时资讯
     const searchClient = new SearchClient(new Config());
     
-    // 聚焦核心热点新闻和政策，排除科普类文章
-    const categoryKeywords: Record<string, string> = {
-      policy: '具身智能 政策 法规 指导意见 最新发布 2025',
-      industry: '具身智能 行业动态 企业发布 新产品 最新进展 2025',
-      technology: '具身智能 技术突破 研发成果 最新技术 2025',
-      market: '具身智能 市场动态 投资 融资 最新趋势 2025'
-    };
+    // 实时抓取全网最新最热门资讯 - 多维度搜索
+    const searchQueries = this.getSearchQueries(category);
     
-    const query = category 
-      ? categoryKeywords[category] || '具身智能 最新动态'
-      : '具身智能 最新新闻 政策发布 技术突破 行业动态 2025';
+    console.log('[Search Queries]', searchQueries);
     
-    // 搜索更多结果以便筛选
-    const searchResult = await searchClient.webSearch(query, 30);
+    // 并行执行多个搜索，获取更全面的资讯
+    const searchPromises = searchQueries.map(query => 
+      searchClient.webSearch(query, 15).catch(err => {
+        console.error('Search error:', err);
+        return { web_items: [] };
+      })
+    );
     
-    // 科普类、百科类关键词（用于过滤）
-    const excludeKeywords = [
-      // 科普类
-      '概念', '是什么', '什么是', '入门', '科普', '介绍', '基础', 
-      '原理', '定义', '详解', '全面了解', '一文读懂', '小白', '初学者',
-      '教程', '指南', '如何理解',
-      // 百科类
-      '百科', '词条', '简介', '维基', 'wiki', 'baike',
-      // 问答类
-      '问答', '知乎', '百度知道'
-    ];
+    const searchResults = await Promise.all(searchPromises);
     
-    // 过滤低质量来源
-    const excludeSources = [
-      '百科', 'baike', 'wiki', '知乎', '知道', '问答'
-    ];
+    // 合并所有搜索结果
+    const allItems = searchResults.flatMap(result => result.web_items || []);
     
-    // 判断是否为科普类/百科类文章
-    const isExcluded = (title: string, snippet: string, source: string): boolean => {
-      const text = (title + ' ' + snippet).toLowerCase();
-      const sourceLower = source.toLowerCase();
-      
-      // 过滤标题/摘要包含排除关键词的
-      if (excludeKeywords.some(k => text.includes(k.toLowerCase()))) {
-        return true;
-      }
-      
-      // 过滤来源为百科、问答类平台的
-      if (excludeSources.some(s => sourceLower.includes(s.toLowerCase()))) {
-        return true;
-      }
-      
-      return false;
-    };
+    console.log(`[Search Results] Total items: ${allItems.length}`);
+    
+    // 去重（按标题）
+    const seenTitles = new Set<string>();
+    const uniqueItems = allItems.filter(item => {
+      if (!item.title) return false;
+      const normalizedTitle = item.title.trim().toLowerCase();
+      if (seenTitles.has(normalizedTitle)) return false;
+      seenTitles.add(normalizedTitle);
+      return true;
+    });
+    
+    console.log(`[After Dedup] Unique items: ${uniqueItems.length}`);
+    
+    // 过滤低质量内容
+    const filteredItems = uniqueItems.filter(item => 
+      !this.isLowQuality(item.title, item.snippet || '', item.site_name || '')
+    );
+    
+    console.log(`[After Filter] Quality items: ${filteredItems.length}`);
     
     // 处理并排序资讯列表
-    let newsList = (searchResult.web_items || [])
-      .filter(item => !isExcluded(item.title, item.snippet || '', item.site_name || '')) // 过滤科普类/百科类文章
+    const newsList = filteredItems
       .map((item, idx) => {
         // 解析发布时间
         let publishDate = new Date();
@@ -150,79 +134,140 @@ export class NewsController {
           }
         }
         
-        // 优化摘要：去除开头的残缺内容
-        let summary = item.snippet || '';
-        summary = this.cleanSummary(summary);
+        // 优化摘要
+        const summary = this.cleanSummary(item.snippet || '');
         
         return {
           id: `news-${Date.now()}-${idx}`,
           title: item.title,
           summary,
-          source: item.site_name || '未知来源',
+          source: item.site_name || '行业资讯',
           publishTime: publishDate.toISOString().split('T')[0],
-          publishTimestamp: publishDate.getTime(), // 用于排序
+          publishTimestamp: publishDate.getTime(),
           category: category || this.detectCategory(item.title + ' ' + item.snippet),
           isHot: false
         };
       })
-      // 按时间降序排列（最近的在前）
+      // 按时间降序排列（最新的在前）
       .sort((a, b) => b.publishTimestamp - a.publishTimestamp)
-      // 每个分类只保留10条
       .slice(0, pageSizeNum);
     
-    // 标记前3条为热门（最新的）
-    newsList = newsList.map((item, idx) => ({
-      ...item,
-      isHot: idx < 3
-    }));
+    // 标记前3条为热门
+    newsList.forEach((item, idx) => {
+      item.isHot = idx < 3;
+    });
     
-    console.log('[News List] Sorted by date, newest first:', newsList.map(n => ({ title: n.title, date: n.publishTime })));
+    console.log('[News List] Top items:', newsList.slice(0, 3).map(n => ({ 
+      title: n.title.slice(0, 30), 
+      date: n.publishTime,
+      source: n.source
+    })));
     
     return {
       list: newsList,
       total: newsList.length,
-      hasMore: false // 每个分类最多10条
+      hasMore: false
     };
   }
 
-  // 清理摘要：去除开头的残缺内容
+  // 获取搜索关键词组合 - 确保获取最新最热的资讯
+  private getSearchQueries(category?: string): string[] {
+    // 当前日期，用于获取最新资讯
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // 基础搜索词 - 确保获取最新资讯
+    const baseQueries = [
+      // 热点新闻
+      '具身智能 最新新闻 今日热点',
+      '人形机器人 最新动态 行业热点',
+      '空间智能 数字孪生 最新进展',
+      // 技术突破
+      '具身智能 技术突破 最新发布',
+      '机器人 AI大模型 最新应用',
+    ];
+    
+    // 分类搜索词
+    const categoryQueries: Record<string, string[]> = {
+      policy: [
+        '具身智能 政策 法规 最新发布',
+        '人形机器人 国家政策 指导意见',
+        '人工智能 产业政策 最新通知',
+      ],
+      industry: [
+        '具身智能 企业动态 产品发布',
+        '人形机器人 公司融资 商业化',
+        '机器人 行业应用 最新落地',
+      ],
+      technology: [
+        '具身智能 技术创新 研发突破',
+        '人形机器人 核心技术 专利发布',
+        '空间计算 多模态 最新技术',
+      ],
+      market: [
+        '具身智能 市场趋势 投资融资',
+        '人形机器人 市场规模 行业报告',
+        '机器人 产业链 投资机会',
+      ],
+    };
+    
+    if (category && categoryQueries[category]) {
+      return categoryQueries[category];
+    }
+    
+    return baseQueries;
+  }
+
+  // 判断是否为低质量内容
+  private isLowQuality(title: string, snippet: string, source: string): boolean {
+    const text = (title + ' ' + snippet).toLowerCase();
+    const sourceLower = source.toLowerCase();
+    
+    // 排除科普类、百科类、问答类
+    const excludeKeywords = [
+      '是什么', '什么是', '概念', '科普', '入门', '基础', '简介',
+      '百科', '词条', 'wiki', 'baike', '知乎', '知道', '问答',
+      '教程', '指南', '一文读懂', '全面了解', '小白', '初学者'
+    ];
+    
+    if (excludeKeywords.some(k => text.includes(k) || sourceLower.includes(k))) {
+      return true;
+    }
+    
+    // 排除标题太短的
+    if (title.length < 10) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  // 清理摘要
   private cleanSummary(summary: string): string {
     if (!summary) return '';
     
-    // 去除开头的残缺句子（以标点符号开头的片段）
-    // 例如："布。在政策..." -> "在政策..."
-    const punctuationPattern = /^[^\u4e00-\u9fa5a-zA-Z0-9]*[。！？；：，、] */;
-    let cleaned = summary.replace(punctuationPattern, '');
-    
-    // 如果开头是残缺的词语（少于3个字且后面紧跟标点），继续清理
-    const shortFragmentPattern = /^[\u4e00-\u9fa5]{1,2}[。！？；：，、] */;
-    cleaned = cleaned.replace(shortFragmentPattern, '');
-    
-    // 确保摘要以完整句子开头（大写字母或中文开头）
-    // 如果开头是残缺的小写英文单词，也去掉
+    // 去除开头的残缺句子
+    let cleaned = summary.replace(/^[^\u4e00-\u9fa5a-zA-Z0-9]*[。！？；：，、] */, '');
+    cleaned = cleaned.replace(/^[\u4e00-\u9fa5]{1,2}[。！？；：，、] */, '');
     cleaned = cleaned.replace(/^[a-z]+\s+/, '');
     
-    // 如果清理后为空或太短，返回原始摘要
-    if (cleaned.length < 10) {
-      return summary;
-    }
-    
-    return cleaned;
+    return cleaned.length < 10 ? summary : cleaned;
   }
 
   // 根据内容自动检测分类
   private detectCategory(content: string): string {
-    const policyKeywords = ['政策', '法规', '意见', '通知', '规划', '工信部', '发改委', '政府'];
-    const industryKeywords = ['企业', '公司', '产品', '发布', '合作', '签约', '落地'];
-    const technologyKeywords = ['技术', '算法', '研发', '突破', '专利', '创新', '芯片', '传感器'];
-    const marketKeywords = ['市场', '投资', '融资', '规模', '增长', '预测', '报告'];
+    const policyKeywords = ['政策', '法规', '意见', '通知', '规划', '工信部', '发改委', '政府', '国务院'];
+    const industryKeywords = ['企业', '公司', '产品', '发布', '合作', '签约', '落地', '商业化'];
+    const technologyKeywords = ['技术', '算法', '研发', '突破', '专利', '创新', '芯片', '传感器', '模型'];
+    const marketKeywords = ['市场', '投资', '融资', '规模', '增长', '预测', '报告', '赛道'];
     
     if (policyKeywords.some(k => content.includes(k))) return 'policy';
     if (technologyKeywords.some(k => content.includes(k))) return 'technology';
     if (marketKeywords.some(k => content.includes(k))) return 'market';
     if (industryKeywords.some(k => content.includes(k))) return 'industry';
     
-    return 'industry'; // 默认行业
+    return 'industry';
   }
 
   @Get('detail')
@@ -234,14 +279,17 @@ export class NewsController {
   ) {
     console.log('[GET /api/news/detail] params:', { id, title, summary, category });
     
-    // 如果有标题，使用 LLM 生成详细内容
     if (title) {
       try {
         const llmClient = new LLMClient(new Config());
         
-        // 生成详细内容
+        // 先搜索获取更多实时信息
+        const searchClient = new SearchClient(new Config());
+        const searchResult = await searchClient.webSearch(title, 3);
+        const realContent = searchResult.web_items?.[0]?.snippet || '';
+        
         const systemPrompt = `你是一位专业的具身智能和空间智能领域分析师。
-请根据资讯标题，生成详细的内容解读（200-300字）。
+请根据资讯标题和搜索到的实时信息，生成详细的内容解读（200-300字）。
 
 输出要求：
 1. 直接输出内容，不要添加任何标题或前缀
@@ -252,7 +300,7 @@ export class NewsController {
         
         const response = await llmClient.invoke([
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `标题：${title}` }
+          { role: 'user', content: `标题：${title}\n\n相关信息：${realContent}` }
         ], { temperature: 0.7 });
         
         const llmContent = response.content || summary || '';
@@ -274,7 +322,6 @@ export class NewsController {
       }
     }
     
-    // 默认返回（兜底）
     return {
       id,
       title: title || '资讯详情',
@@ -290,7 +337,7 @@ export class NewsController {
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {
     try {
       const searchClient = new SearchClient(new Config());
-      const searchResult = await searchClient.webSearch('具身智能 最新动态 2024', 5);
+      const searchResult = await searchClient.webSearch('具身智能 人形机器人 最新动态', 5);
       
       const now = Date.now();
       return (searchResult.web_items || [])
@@ -324,7 +371,6 @@ export class NewsController {
     try {
       const llmClient = new LLMClient(new Config());
       
-      // 根据分类使用不同的分析模板
       const systemPrompt = this.getAnalysisPrompt(body.category || 'policy');
       
       const messages = [
@@ -347,7 +393,6 @@ ${body.content}
       
       const response = await llmClient.invoke(messages, { temperature: 0.7 });
       
-      // 尝试解析 JSON
       try {
         const jsonMatch = response.content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -357,7 +402,6 @@ ${body.content}
         console.error('JSON parse error:', parseError);
       }
       
-      // 解析失败，返回默认结构
       const category = body.category || 'policy';
       return this.getDefaultAnalysis(category);
     } catch (error) {
@@ -366,7 +410,6 @@ ${body.content}
     }
   }
 
-  // 获取分析提示词
   private getAnalysisPrompt(category: string): string {
     const basePrompt = `你是一位专业的行业分析师，服务于八维通科技有限公司。
 
@@ -403,7 +446,6 @@ ${body.content}
     }
   }
 
-  // 获取默认分析结果
   private getDefaultAnalysis(category: string) {
     if (category === 'policy') {
       return {
