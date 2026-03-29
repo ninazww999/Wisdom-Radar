@@ -1,17 +1,9 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useLoad, useDidShow, usePullDownRefresh, useReachBottom, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow, usePullDownRefresh, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useState, useRef } from 'react'
 import type { FC } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { 
-  FileText, 
-  RefreshCw,
-  Flame,
-  Globe,
-  Target
-} from 'lucide-react-taro'
+import { RefreshCw } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
 
@@ -23,7 +15,6 @@ interface NewsItem {
   publishTime: string
   category: 'policy' | 'industry' | 'technology' | 'market'
   isHot?: boolean
-  bawitonInsight?: string
   url?: string
 }
 
@@ -31,13 +22,6 @@ interface NewsResponse {
   list: NewsItem[]
   total: number
   hasMore: boolean
-}
-
-const categoryLabels = {
-  policy: '政策',
-  industry: '行业',
-  technology: '技术',
-  market: '市场'
 }
 
 // 每日名言库
@@ -59,9 +43,6 @@ const IndexPage: FC = () => {
   const [newsList, setNewsList] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [page, setPage] = useState(1)
-  const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [dailyQuote] = useState(getDailyQuote)
   
   // 记录上次刷新的日期，确保每天第一次打开时刷新
@@ -113,43 +94,24 @@ const IndexPage: FC = () => {
     Taro.stopPullDownRefresh()
   })
 
-  useReachBottom(() => {
-    if (hasMore && !loading) {
-      loadMore()
-    }
-  })
-
-  const fetchNews = async (pageNum: number = 1, category?: string) => {
+  const fetchNews = async () => {
     try {
-      if (pageNum === 1) {
-        setLoading(true)
-      }
+      setLoading(true)
       
-      console.log('[Fetch News] Fetching latest news, page:', pageNum, 'category:', category)
+      console.log('[Fetch News] Fetching latest news...')
       
       const response = await Network.request({
         url: '/api/news/list',
         method: 'GET',
-        data: { 
-          page: pageNum, 
-          pageSize: 10,
-          category: category || undefined
-        }
+        data: { page: 1, pageSize: 15 }
       })
       
       console.log('[Fetch News] Response:', response)
       
       if (response.data) {
         const data = response.data as NewsResponse
-        if (pageNum === 1) {
-          setNewsList(data.list)
-          // 更新刷新日期为今天
-          lastRefreshDateRef.current = getTodayDateStr()
-        } else {
-          setNewsList(prev => [...prev, ...data.list])
-        }
-        setHasMore(data.hasMore)
-        setPage(pageNum)
+        setNewsList(data.list)
+        lastRefreshDateRef.current = getTodayDateStr()
       }
     } catch (error) {
       console.error('[Fetch News] Error:', error)
@@ -161,21 +123,7 @@ const IndexPage: FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await fetchNews(1, activeCategory || undefined)
-  }
-
-  const loadMore = () => {
-    fetchNews(page + 1, activeCategory || undefined)
-  }
-
-  const handleCategoryClick = (category: string) => {
-    if (activeCategory === category) {
-      setActiveCategory(null)
-      fetchNews(1, undefined)
-    } else {
-      setActiveCategory(category)
-      fetchNews(1, category)
-    }
+    await fetchNews()
   }
 
   const handleNewsClick = (news: NewsItem) => {
@@ -185,7 +133,7 @@ const IndexPage: FC = () => {
     })
   }
 
-  const formatDate = (dateStr: string) => {
+  const formatTime = (dateStr: string) => {
     const date = new Date(dateStr)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
@@ -208,60 +156,85 @@ const IndexPage: FC = () => {
     return `${year}年${month}月${date}日`
   }
 
-  // 按分类分组资讯
+  // 按分类分组资讯，每个维度只取3条
   const getGroupedNews = () => {
     const hotNews = newsList.filter(item => item.isHot || item.category === 'technology').slice(0, 3)
-    const policyNews = newsList.filter(item => item.category === 'policy').slice(0, 5)
-    const marketNews = newsList.filter(item => item.category === 'industry' || item.category === 'market').slice(0, 5)
+    const policyNews = newsList.filter(item => item.category === 'policy').slice(0, 3)
+    const industryNews = newsList.filter(item => item.category === 'industry').slice(0, 3)
+    const marketNews = newsList.filter(item => item.category === 'market').slice(0, 3)
     
-    return { hotNews, policyNews, marketNews }
+    return { hotNews, policyNews, industryNews, marketNews }
   }
 
-  const { hotNews, policyNews, marketNews } = getGroupedNews()
+  const { hotNews, policyNews, industryNews, marketNews } = getGroupedNews()
 
-  // 渲染资讯卡片
-  const renderNewsCard = (news: NewsItem, showInsight: boolean = false) => (
-    <Card 
+  // 渲染单条资讯 - 简洁样式
+  const renderNewsItem = (news: NewsItem, index: number) => (
+    <View 
       key={news.id} 
-      className="mb-3 bg-neutral-900 border-neutral-800 overflow-hidden"
+      className="py-3 border-b border-neutral-800 last:border-b-0"
       onClick={() => handleNewsClick(news)}
     >
-      <CardContent className="py-4 px-4">
-        {/* 标题 */}
-        <Text className="text-white font-medium text-base mb-2 leading-relaxed block">
-          {news.title}
-        </Text>
-        
-        {/* 元信息 */}
-        <View className="flex items-center gap-2 mb-3">
-          <Badge className="bg-neutral-800 text-neutral-300 text-xs px-2 py-1 rounded border-0">
-            {categoryLabels[news.category]}
-          </Badge>
-          <Text className="text-neutral-600 text-xs">{news.source}</Text>
-          <Text className="text-neutral-700 text-xs">·</Text>
-          <Text className="text-neutral-600 text-xs">{formatDate(news.publishTime)}</Text>
+      <View className="flex items-start gap-3">
+        {/* 序号 */}
+        <View className="w-6 h-6 rounded bg-neutral-800 flex items-center justify-center flex-shrink-0 mt-1">
+          <Text className="text-neutral-400 text-xs">{index + 1}</Text>
         </View>
         
-        {/* 内容摘要 */}
-        <Text className="text-neutral-400 text-sm leading-relaxed block">
-          {news.summary.slice(0, 80)}...
-        </Text>
-        
-        {/* 八维通洞察 */}
-        {showInsight && (
-          <View className="bg-neutral-800 bg-opacity-50 rounded-lg p-3 mt-3">
-            <Text className="text-neutral-300 text-sm leading-relaxed">
-              💡 {news.bawitonInsight || '点击查看八维通洞察分析'}
-            </Text>
+        {/* 内容 */}
+        <View className="flex-1 min-w-0">
+          <Text className="text-neutral-200 text-sm leading-relaxed block mb-2">
+            {news.title}
+          </Text>
+          <View className="flex items-center gap-2">
+            <Text className="text-neutral-500 text-xs">{news.source}</Text>
+            <Text className="text-neutral-700 text-xs">·</Text>
+            <Text className="text-neutral-500 text-xs">{formatTime(news.publishTime)}</Text>
           </View>
-        )}
-      </CardContent>
-    </Card>
+        </View>
+      </View>
+    </View>
+  )
+
+  // 渲染分组
+  const renderSection = (title: string, icon: string, news: NewsItem[]) => {
+    if (news.length === 0) return null
+    
+    return (
+      <View className="mb-5">
+        <View className="flex items-center gap-2 mb-2 px-4">
+          <Text className="text-base">{icon}</Text>
+          <Text className="text-white font-medium">{title}</Text>
+        </View>
+        <View className="bg-neutral-900 rounded-lg mx-4 px-3">
+          {news.map((item, idx) => renderNewsItem(item, idx))}
+        </View>
+      </View>
+    )
+  }
+
+  // 加载骨架屏
+  const renderSkeleton = () => (
+    <View className="px-4">
+      {[1, 2, 3].map((section) => (
+        <View key={section} className="mb-5">
+          <Skeleton className="h-5 w-24 mb-2 bg-neutral-800" />
+          <View className="bg-neutral-900 rounded-lg p-3">
+            {[1, 2, 3].map((item) => (
+              <View key={item} className="py-3 border-b border-neutral-800 last:border-b-0">
+                <Skeleton className="h-4 w-full mb-2 bg-neutral-800" />
+                <Skeleton className="h-3 w-24 bg-neutral-800" />
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
+    </View>
   )
 
   return (
-    <View className="min-h-screen bg-black">
-      {/* Header - Glass Style */}
+    <View className="min-h-screen bg-black pb-8">
+      {/* Header */}
       <View 
         style={{
           background: 'rgba(0, 0, 0, 0.6)',
@@ -269,25 +242,25 @@ const IndexPage: FC = () => {
           WebkitBackdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
         }}
-        className="px-4 pt-8 pb-5"
+        className="px-4 pt-10 pb-4 sticky top-0 z-10"
       >
         <View className="flex items-center justify-between mb-3">
           <View>
-            <Text className="text-white text-lg font-bold">智界雷达 · 每日行业决策参考</Text>
+            <Text className="text-white text-xl font-bold">智界雷达</Text>
             <Text className="text-neutral-500 text-sm mt-1">{getTodayDate()}</Text>
           </View>
           <View 
-            className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-neutral-900 flex items-center justify-center"
             onClick={handleRefresh}
           >
-            <RefreshCw size={18} color="#a3a3a3" className={refreshing ? 'animate-spin' : ''} />
+            <RefreshCw size={16} color="#a3a3a3" className={refreshing ? 'animate-spin' : ''} />
           </View>
         </View>
         
-        {/* 系统功能说明 */}
-        <View className="bg-neutral-900 bg-opacity-50 rounded-lg p-3 mb-3">
+        {/* 系统说明 */}
+        <View className="bg-neutral-900 bg-opacity-50 rounded-lg p-3 mb-2">
           <Text className="text-neutral-400 text-xs leading-relaxed">
-            📌 系统功能：每日自动抓取具身智能与空间智能领域信息，AI智能筛选热点资讯、政策风向、市场动态，为您提供决策参考。
+            每日自动抓取具身智能与空间智能领域最新资讯，AI智能筛选热点、政策、行业、市场动态，为您提供决策参考。
           </Text>
         </View>
         
@@ -303,127 +276,21 @@ const IndexPage: FC = () => {
       </View>
 
       {/* Content */}
-      <View className="px-4">
-        {/* Category Tabs */}
-        <View className="flex gap-2 mb-4 overflow-x-auto py-2">
-          {[null, 'policy', 'industry', 'technology', 'market'].map((cat) => {
-            const isActive = activeCategory === cat
-            return (
-              <View
-                key={cat || 'all'}
-                className={`px-4 py-2 rounded-full flex-shrink-0 ${isActive ? 'bg-white' : 'bg-neutral-900'}`}
-                onClick={() => handleCategoryClick(cat as string)}
-              >
-                <Text className={`text-sm ${isActive ? 'text-black font-medium' : 'text-neutral-400'}`}>
-                  {cat ? categoryLabels[cat as keyof typeof categoryLabels] : '全部'}
-                </Text>
-              </View>
-            )
-          })}
+      {loading ? (
+        renderSkeleton()
+      ) : (
+        <View className="pt-2">
+          {renderSection('热点资讯', '🔥', hotNews)}
+          {renderSection('政策风向', '📋', policyNews)}
+          {renderSection('行业动态', '🏢', industryNews)}
+          {renderSection('市场趋势', '📈', marketNews)}
+          
+          {/* 底部提示 */}
+          <View className="text-center py-6">
+            <Text className="text-neutral-600 text-xs">— 下拉刷新获取最新资讯 —</Text>
+          </View>
         </View>
-
-        {/* News List - 分类展示 */}
-        {loading && newsList.length === 0 ? (
-          <View>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="mb-3 bg-neutral-900 border-neutral-800">
-                <CardContent className="py-4">
-                  <Skeleton className="h-4 w-3/4 mb-3 bg-neutral-800" />
-                  <Skeleton className="h-3 w-full mb-2 bg-neutral-800" />
-                  <Skeleton className="h-3 w-1/2 bg-neutral-800" />
-                </CardContent>
-              </Card>
-            ))}
-          </View>
-        ) : newsList.length === 0 ? (
-          <View className="flex flex-col items-center justify-center py-20">
-            <View className="w-16 h-16 rounded-full bg-neutral-900 flex items-center justify-center mb-4">
-              <FileText size={32} color="#525252" />
-            </View>
-            <Text className="text-neutral-500 text-sm">暂无资讯</Text>
-          </View>
-        ) : activeCategory ? (
-          /* 单分类模式 */
-          <View>
-            {newsList.map((news) => (
-              <Card 
-                key={news.id} 
-                className="mb-3 bg-neutral-900 border-neutral-800 overflow-hidden"
-                onClick={() => handleNewsClick(news)}
-              >
-                <CardContent className="py-4 px-4">
-                  <Text className="text-white font-medium text-base mb-3 leading-relaxed">
-                    {news.title}
-                  </Text>
-                  <View className="flex items-center justify-between">
-                    <View className="flex items-center gap-2">
-                      <Badge className="bg-neutral-800 text-neutral-300 text-xs px-2 py-1 rounded border-0">
-                        {categoryLabels[news.category]}
-                      </Badge>
-                      <Text className="text-neutral-600 text-xs">{news.source}</Text>
-                    </View>
-                    <Text className="text-neutral-600 text-xs">
-                      {formatDate(news.publishTime)}
-                    </Text>
-                  </View>
-                </CardContent>
-              </Card>
-            ))}
-          </View>
-        ) : (
-          /* 分组模式 - 参考 PushPlus */
-          <View>
-            {/* 🔥 热点资讯 */}
-            {hotNews.length > 0 && (
-              <View className="mb-6">
-                <View className="flex items-center gap-2 mb-3">
-                  <Flame size={16} color="#10a37f" />
-                  <Text className="text-white font-medium">热点资讯</Text>
-                </View>
-                {hotNews.map((news) => renderNewsCard(news, true))}
-              </View>
-            )}
-
-            {/* 🌍 政策风向 */}
-            {policyNews.length > 0 && (
-              <View className="mb-6">
-                <View className="flex items-center gap-2 mb-3">
-                  <Globe size={16} color="#10a37f" />
-                  <Text className="text-white font-medium">政策风向（战略层）</Text>
-                </View>
-                {policyNews.map((news) => renderNewsCard(news, true))}
-              </View>
-            )}
-
-            {/* 🎯 市场动态 */}
-            {marketNews.length > 0 && (
-              <View className="mb-6">
-                <View className="flex items-center gap-2 mb-3">
-                  <Target size={16} color="#10a37f" />
-                  <Text className="text-white font-medium">市场动态（业务层）</Text>
-                </View>
-                {marketNews.map((news) => renderNewsCard(news, true))}
-              </View>
-            )}
-
-            {/* 加载更多 */}
-            {hasMore && (
-              <View className="flex justify-center py-6">
-                <Text className="text-neutral-600 text-sm">
-                  {loading ? '加载中...' : '上拉加载更多'}
-                </Text>
-              </View>
-            )}
-
-            {/* 已加载全部 */}
-            {!hasMore && newsList.length > 0 && (
-              <View className="flex justify-center py-6">
-                <Text className="text-neutral-600 text-sm">已加载全部资讯</Text>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
+      )}
     </View>
   )
 }
