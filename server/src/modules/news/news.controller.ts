@@ -242,14 +242,20 @@ export class NewsController {
 
 请直接输出JSON格式，不要包含代码块标记：
 {
-  "summary": "50-80字的简要总结，概括核心要点",
-  "content": "200-300字的详细解读，包含背景、主要内容和行业影响"
+  "summary": "一句话核心要点总结（30-50字，直接说明发生了什么，不要包含标题、时间、来源等元信息）",
+  "content": "详细解读，包含：背景介绍、主要内容、行业影响分析（200-300字）"
 }
 
-要求：
-1. summary必须是独立的归纳总结，不是截取原文片段
-2. 内容要专业、客观，不要针对特定公司分析
-3. 不要使用Markdown格式，输出纯文本`;
+示例（标题：北京发布具身智能三年行动计划）：
+{
+  "summary": "北京市发布具身智能产业发展三年行动计划，明确到2027年实现技术突破和产业规模化发展目标。",
+  "content": "该计划提出..."
+}
+
+严格要求：
+1. summary必须是纯粹的内容总结，不要出现标题、时间、来源、作者等信息
+2. summary用简洁的一句话说明核心事实
+3. 内容要专业、客观`;
   }
 
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {

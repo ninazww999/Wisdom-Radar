@@ -136,19 +136,6 @@ const IndexPage: FC = () => {
     return dateStr
   }
 
-  // 判断摘要是否为残缺片段（需要隐藏）
-  const isIncompleteSnippet = (summary: string): boolean => {
-    if (!summary || summary.length < 20) return true
-    
-    // 开头是标点符号，说明是截断的片段
-    if (/^[。！？；：，、.]/.test(summary)) return true
-    
-    // 开头是残缺的词语（1-2个字+标点）
-    if (/^[\u4e00-\u9fa5]{1,2}[。！？；：，、]/.test(summary)) return true
-    
-    return false
-  }
-
   const getTodayDate = () => {
     const now = new Date()
     const weekDays = ['日', '一', '二', '三', '四', '五', '六']
@@ -226,16 +213,9 @@ const IndexPage: FC = () => {
               >
                 <CardContent className="py-4 px-4">
                   {/* Title */}
-                  <Text className="text-white font-medium text-base mb-2 leading-relaxed">
+                  <Text className="text-white font-medium text-base mb-3 leading-relaxed">
                     {news.title}
                   </Text>
-                  
-                  {/* Summary - 只显示完整的摘要，隐藏截断片段 */}
-                  {news.summary && !isIncompleteSnippet(news.summary) && (
-                    <Text className="text-neutral-500 text-sm mb-3 line-clamp-2 leading-relaxed">
-                      {news.summary}
-                    </Text>
-                  )}
                   
                   {/* Meta */}
                   <View className="flex items-center justify-between">
