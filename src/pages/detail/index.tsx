@@ -63,7 +63,7 @@ const DetailPage: FC = () => {
         const response = await Network.request({
           url: '/api/news/detail',
           method: 'GET',
-          data: { id, title: cachedNews.title, summary: cachedNews.summary }
+          data: { id, title: cachedNews.title, summary: cachedNews.summary, category: cachedNews.category }
         })
         console.log('Fetch detail response:', response)
         
