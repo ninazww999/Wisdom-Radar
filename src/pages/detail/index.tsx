@@ -174,15 +174,28 @@ const DetailPage: FC = () => {
 
   return (
     <View className="min-h-screen bg-black">
-      {/* Header */}
-      <View className="px-4 py-4 flex items-center gap-4 border-b border-neutral-900">
-        <View 
-          className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
-          onClick={handleBack}
-        >
-          <ArrowLeft size={20} color="#a3a3a3" />
+      {/* Header - Glass Style */}
+      <View 
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+        }}
+        className="px-4 py-4"
+      >
+        <View className="flex items-center gap-4">
+          <View 
+            className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
+            onClick={handleBack}
+          >
+            <ArrowLeft size={20} color="#a3a3a3" />
+          </View>
+          <Text className="flex-1 text-white font-medium">资讯详情</Text>
         </View>
-        <Text className="flex-1 text-white font-medium">资讯详情</Text>
       </View>
 
       {/* Content */}
