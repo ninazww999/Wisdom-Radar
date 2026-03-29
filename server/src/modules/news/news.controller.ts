@@ -160,11 +160,12 @@ export class NewsController {
     return `你是一位专业的具身智能和空间智能领域分析师。
 请根据提供的资讯标题和摘要，生成详细的内容解读。
 
-输出格式要求：
-1. 内容：详细解读该资讯，包含背景、主要内容和行业影响分析（200-300字）
-2. 不要使用 Markdown 格式，直接输出纯文本
-3. 语言要专业、客观
-4. 不要包含针对特定公司的分析或建议`;
+输出要求：
+1. 直接输出资讯解读内容，不要添加任何标题或前缀
+2. 包含背景、主要内容和行业影响分析（200-300字）
+3. 不要使用 Markdown 格式，直接输出纯文本
+4. 语言要专业、客观
+5. 不要包含针对特定公司的分析或建议`;
   }
 
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {
