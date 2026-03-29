@@ -202,15 +202,15 @@ const DetailPage: FC = () => {
 
         {/* Summary */}
         <View className="mb-6">
-          <Text className="text-neutral-500 text-sm mb-2">摘要</Text>
+          <Text className="text-neutral-300 text-sm font-medium mb-3 block">摘要</Text>
           <Text className="text-neutral-400 text-base leading-relaxed">{detail.summary}</Text>
         </View>
 
         {/* Content */}
         {detail.content && detail.content !== detail.summary && (
           <View className="mb-6">
-            <Text className="text-neutral-500 text-sm mb-2">原文内容</Text>
-            <Text className="text-neutral-300 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
+            <Text className="text-neutral-300 text-sm font-medium mb-3 block">原文内容</Text>
+            <Text className="text-neutral-400 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
           </View>
         )}
 
