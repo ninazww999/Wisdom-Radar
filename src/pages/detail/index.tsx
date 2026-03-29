@@ -11,7 +11,8 @@ import {
   Bookmark,
   Sparkles,
   TrendingUp,
-  Lightbulb
+  Lightbulb,
+  ExternalLink
 } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
@@ -31,6 +32,7 @@ interface NewsDetail {
   category: 'policy' | 'industry' | 'technology' | 'market'
   summary: string
   content: string
+  url?: string
   relatedNews: Array<{
     id: string
     title: string
@@ -218,6 +220,7 @@ const DetailPage: FC = () => {
         publishTime: detail.publishTime,
         category: detail.category,
         summary: detail.summary,
+        url: detail.url,
         bookmarkedAt: new Date().toISOString()
       }
       bookmarks.unshift(bookmarkItem)
@@ -225,6 +228,27 @@ const DetailPage: FC = () => {
       setIsBookmarked(true)
       Taro.showToast({ title: '收藏成功', icon: 'success' })
     }
+  }
+
+  // 打开原文链接
+  const handleOpenOriginal = () => {
+    if (!detail?.url) {
+      Taro.showToast({ title: '暂无原文链接', icon: 'none' })
+      return
+    }
+    
+    // 小程序端使用 webview 打开
+    Taro.navigateTo({
+      url: `/pages/webview/index?url=${encodeURIComponent(detail.url || '')}&title=${encodeURIComponent(detail.title)}`
+    }).catch(() => {
+      // 如果跳转失败（如页面不存在），使用复制链接
+      Taro.setClipboardData({
+        data: detail.url || '',
+        success: () => {
+          Taro.showToast({ title: '链接已复制', icon: 'success' })
+        }
+      })
+    })
   }
 
   if (loading) {
@@ -410,6 +434,16 @@ const DetailPage: FC = () => {
           <View className="flex items-center gap-2">
             <Bookmark size={18} color={isBookmarked ? '#10a37f' : '#a3a3a3'} />
             <Text className="text-neutral-300">{isBookmarked ? '已收藏' : '收藏'}</Text>
+          </View>
+        </Button>
+        {/* 查看原文 */}
+        <Button
+          className="flex-1 bg-neutral-900 border-neutral-800 text-white rounded-xl h-12"
+          onClick={handleOpenOriginal}
+        >
+          <View className="flex items-center gap-2">
+            <ExternalLink size={18} color="#a3a3a3" />
+            <Text className="text-neutral-300">原文</Text>
           </View>
         </Button>
         {/* 微信小程序分享按钮 */}

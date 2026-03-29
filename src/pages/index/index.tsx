@@ -24,6 +24,7 @@ interface NewsItem {
   category: 'policy' | 'industry' | 'technology' | 'market'
   isHot?: boolean
   bawitonInsight?: string
+  url?: string
 }
 
 interface NewsResponse {

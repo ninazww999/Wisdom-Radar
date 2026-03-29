@@ -143,11 +143,15 @@ export class NewsController {
         // 截断来源名称，最多显示10个字
         const source = this.truncateSource(item.site_name || '行业资讯', 10);
         
+        // 原文链接
+        const url = item.url || '';
+        
         return {
           id: `news-${Date.now()}-${idx}`,
           title,
           summary,
           source,
+          url,
           publishTime: publishDate.toISOString().split('T')[0],
           publishTimestamp: publishDate.getTime(),
           category: category || this.detectCategory(item.title + ' ' + item.snippet),
