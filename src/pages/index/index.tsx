@@ -7,7 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { 
   FileText, 
-  RefreshCw
+  RefreshCw,
+  Flame,
+  Globe,
+  Target
 } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
@@ -20,6 +23,7 @@ interface NewsItem {
   publishTime: string
   category: 'policy' | 'industry' | 'technology' | 'market'
   isHot?: boolean
+  bawitonInsight?: string
 }
 
 interface NewsResponse {
@@ -35,6 +39,21 @@ const categoryLabels = {
   market: '市场'
 }
 
+// 每日名言库
+const dailyQuotes = [
+  { quote: '具身智能是人工智能的下一个重大突破。', author: '李飞飞（斯坦福大学教授）' },
+  { quote: '空间智能将改变我们理解和交互世界的方式。', author: '李飞飞（斯坦福大学教授）' },
+  { quote: '人工智能的未来在于与物理世界的深度融合。', author: 'Geoffrey Hinton（图灵奖得主）' },
+  { quote: '机器人是人工智能的终极载体。', author: 'Rodney Brooks（机器人专家）' },
+  { quote: '具身智能将推动机器人从工具进化为伙伴。', author: '行业共识' }
+]
+
+const getDailyQuote = () => {
+  const today = new Date()
+  const index = today.getDate() % dailyQuotes.length
+  return dailyQuotes[index]
+}
+
 const IndexPage: FC = () => {
   const [newsList, setNewsList] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,6 +61,7 @@ const IndexPage: FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(1)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [dailyQuote] = useState(getDailyQuote)
 
   useLoad(() => {
     console.log('Index page loaded.')
@@ -152,12 +172,60 @@ const IndexPage: FC = () => {
 
   const getTodayDate = () => {
     const now = new Date()
-    const weekDays = ['日', '一', '二', '三', '四', '五', '六']
-    const month = now.getMonth() + 1
-    const date = now.getDate()
-    const weekDay = weekDays[now.getDay()]
-    return `${month}月${date}日 星期${weekDay}`
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const date = String(now.getDate()).padStart(2, '0')
+    return `${year}年${month}月${date}日`
   }
+
+  // 按分类分组资讯
+  const getGroupedNews = () => {
+    const hotNews = newsList.filter(item => item.isHot || item.category === 'technology').slice(0, 3)
+    const policyNews = newsList.filter(item => item.category === 'policy').slice(0, 5)
+    const marketNews = newsList.filter(item => item.category === 'industry' || item.category === 'market').slice(0, 5)
+    
+    return { hotNews, policyNews, marketNews }
+  }
+
+  const { hotNews, policyNews, marketNews } = getGroupedNews()
+
+  // 渲染资讯卡片
+  const renderNewsCard = (news: NewsItem, showInsight: boolean = false) => (
+    <Card 
+      key={news.id} 
+      className="mb-3 bg-neutral-900 border-neutral-800 overflow-hidden"
+      onClick={() => handleNewsClick(news)}
+    >
+      <CardContent className="py-4 px-4">
+        {/* 标题 */}
+        <Text className="text-white font-medium text-base mb-2 leading-relaxed block">
+          【{news.title}】{news.publishTime}
+        </Text>
+        
+        {/* 内容摘要 */}
+        <Text className="text-neutral-400 text-sm mb-3 leading-relaxed block">
+          • 内容：{news.summary.slice(0, 100)}...
+        </Text>
+        
+        {/* 八维通洞察 */}
+        {showInsight && (
+          <View className="bg-neutral-800 bg-opacity-50 rounded-lg p-3 mb-2">
+            <Text className="text-neutral-300 text-sm leading-relaxed">
+              • 八维通洞察：{news.bawitonInsight || '点击查看详细分析'}
+            </Text>
+          </View>
+        )}
+        
+        {/* 分类标签 */}
+        <View className="flex items-center gap-2">
+          <Badge className="bg-neutral-800 text-neutral-300 text-xs px-2 py-1 rounded border-0">
+            {categoryLabels[news.category]}
+          </Badge>
+          <Text className="text-neutral-600 text-xs">{news.source}</Text>
+        </View>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <View className="min-h-screen bg-black">
@@ -171,8 +239,11 @@ const IndexPage: FC = () => {
         }}
         className="px-4 pt-8 pb-5"
       >
-        <View className="flex items-center justify-between">
-          <Text className="text-neutral-300 text-lg font-medium">{getTodayDate()}</Text>
+        <View className="flex items-center justify-between mb-3">
+          <View>
+            <Text className="text-white text-lg font-bold">智界雷达 · 每日行业决策参考</Text>
+            <Text className="text-neutral-500 text-sm mt-1">{getTodayDate()}</Text>
+          </View>
           <View 
             className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
             onClick={handleRefresh}
@@ -180,12 +251,29 @@ const IndexPage: FC = () => {
             <RefreshCw size={18} color="#a3a3a3" className={refreshing ? 'animate-spin' : ''} />
           </View>
         </View>
+        
+        {/* 系统功能说明 */}
+        <View className="bg-neutral-900 bg-opacity-50 rounded-lg p-3 mb-3">
+          <Text className="text-neutral-400 text-xs leading-relaxed">
+            📌 系统功能：每日自动抓取具身智能与空间智能领域信息，AI智能筛选热点资讯、政策风向、市场动态，为您提供决策参考。
+          </Text>
+        </View>
+        
+        {/* 每日一句 */}
+        <View className="border-l-2 border-neutral-700 pl-3">
+          <Text className="text-neutral-500 text-xs italic leading-relaxed">
+            &ldquo;{dailyQuote.quote}&rdquo;
+          </Text>
+          <Text className="text-neutral-600 text-xs mt-1 block">
+            —— {dailyQuote.author}
+          </Text>
+        </View>
       </View>
 
       {/* Content */}
       <View className="px-4">
         {/* Category Tabs */}
-        <View className="flex gap-2 mb-4 overflow-x-auto">
+        <View className="flex gap-2 mb-4 overflow-x-auto py-2">
           {[null, 'policy', 'industry', 'technology', 'market'].map((cat) => {
             const isActive = activeCategory === cat
             return (
@@ -202,7 +290,7 @@ const IndexPage: FC = () => {
           })}
         </View>
 
-        {/* News List */}
+        {/* News List - 分类展示 */}
         {loading && newsList.length === 0 ? (
           <View>
             {[1, 2, 3].map((i) => (
@@ -222,7 +310,8 @@ const IndexPage: FC = () => {
             </View>
             <Text className="text-neutral-500 text-sm">暂无资讯</Text>
           </View>
-        ) : (
+        ) : activeCategory ? (
+          /* 单分类模式 */
           <View>
             {newsList.map((news) => (
               <Card 
@@ -231,12 +320,9 @@ const IndexPage: FC = () => {
                 onClick={() => handleNewsClick(news)}
               >
                 <CardContent className="py-4 px-4">
-                  {/* Title */}
                   <Text className="text-white font-medium text-base mb-3 leading-relaxed">
                     {news.title}
                   </Text>
-                  
-                  {/* Meta */}
                   <View className="flex items-center justify-between">
                     <View className="flex items-center gap-2">
                       <Badge className="bg-neutral-800 text-neutral-300 text-xs px-2 py-1 rounded border-0">
@@ -251,8 +337,44 @@ const IndexPage: FC = () => {
                 </CardContent>
               </Card>
             ))}
+          </View>
+        ) : (
+          /* 分组模式 - 参考 PushPlus */
+          <View>
+            {/* 🔥 热点资讯 */}
+            {hotNews.length > 0 && (
+              <View className="mb-6">
+                <View className="flex items-center gap-2 mb-3">
+                  <Flame size={16} color="#10a37f" />
+                  <Text className="text-white font-medium">热点资讯</Text>
+                </View>
+                {hotNews.map((news) => renderNewsCard(news, true))}
+              </View>
+            )}
 
-            {/* Load More */}
+            {/* 🌍 政策风向 */}
+            {policyNews.length > 0 && (
+              <View className="mb-6">
+                <View className="flex items-center gap-2 mb-3">
+                  <Globe size={16} color="#10a37f" />
+                  <Text className="text-white font-medium">政策风向（战略层）</Text>
+                </View>
+                {policyNews.map((news) => renderNewsCard(news, true))}
+              </View>
+            )}
+
+            {/* 🎯 市场动态 */}
+            {marketNews.length > 0 && (
+              <View className="mb-6">
+                <View className="flex items-center gap-2 mb-3">
+                  <Target size={16} color="#10a37f" />
+                  <Text className="text-white font-medium">市场动态（业务层）</Text>
+                </View>
+                {marketNews.map((news) => renderNewsCard(news, true))}
+              </View>
+            )}
+
+            {/* 加载更多 */}
             {hasMore && (
               <View className="flex justify-center py-6">
                 <Text className="text-neutral-600 text-sm">
@@ -261,10 +383,10 @@ const IndexPage: FC = () => {
               </View>
             )}
 
-            {/* No More */}
+            {/* 已加载全部 */}
             {!hasMore && newsList.length > 0 && (
               <View className="flex justify-center py-6">
-                <Text className="text-neutral-600 text-sm">已加载全部</Text>
+                <Text className="text-neutral-600 text-sm">已加载全部资讯</Text>
               </View>
             )}
           </View>
