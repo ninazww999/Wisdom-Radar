@@ -182,28 +182,26 @@ export class NewsController {
           },
           {
             role: 'user' as const,
-            content: `标题：${title}
-
-请生成内容分析：`
+            content: `标题：${title}`
           }
         ];
         
         const response = await llmClient.invoke(messages, { temperature: 0.7 });
         
-        // 解析LLM返回的JSON
-        let llmSummary = summary || '';
-        let llmContent = response.content;
+        // LLM直接返回纯文本摘要
+        const llmSummary = response.content?.trim() || summary || '';
         
-        try {
-          const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            llmSummary = parsed.summary || summary || '';
-            llmContent = parsed.content || response.content;
-          }
-        } catch (parseError) {
-          console.error('Parse LLM response error:', parseError);
-        }
+        // 生成详细内容
+        const contentPrompt = `你是一位专业的具身智能和空间智能领域分析师。
+请根据资讯标题，生成详细的内容解读（200-300字）。
+要求：专业、客观，包含背景、主要内容和行业影响分析。不要使用Markdown格式。`;
+        
+        const contentResponse = await llmClient.invoke([
+          { role: 'system', content: contentPrompt },
+          { role: 'user', content: `标题：${title}` }
+        ], { temperature: 0.7 });
+        
+        const llmContent = contentResponse.content || llmSummary;
         
         const relatedNews = await this.getRelatedNews(title);
         
@@ -237,25 +235,19 @@ export class NewsController {
 
   // 根据分类获取不同的系统提示词（原文内容不需要包含八维通分析）
   private getSystemPrompt(category: string): string {
-    return `你是一位专业的具身智能和空间智能领域分析师。
-请根据提供的资讯标题，生成专业的内容分析。
+    return `你是一位专业的行业分析师。请根据资讯标题，生成一段纯粹的内容摘要。
 
-请直接输出JSON格式，不要包含代码块标记：
-{
-  "summary": "一句话核心要点总结（30-50字，直接说明发生了什么，不要包含标题、时间、来源等元信息）",
-  "content": "详细解读，包含：背景介绍、主要内容、行业影响分析（200-300字）"
-}
+输出要求：
+1. 只输出一句话总结（30-50字），说明核心事实是什么
+2. 禁止包含：标题、来源、时间、作者、标签、链接等元信息
+3. 禁止包含：网页元素如"听全文"、"查看原文"等
+4. 直接输出摘要文本，不要JSON格式，不要任何标记
 
-示例（标题：北京发布具身智能三年行动计划）：
-{
-  "summary": "北京市发布具身智能产业发展三年行动计划，明确到2027年实现技术突破和产业规模化发展目标。",
-  "content": "该计划提出..."
-}
+错误示例（包含了标题、来源、时间）：
+中关村论坛年会｜推动具身智能产品...中国经济网 2026-03-28...
 
-严格要求：
-1. summary必须是纯粹的内容总结，不要出现标题、时间、来源、作者等信息
-2. summary用简洁的一句话说明核心事实
-3. 内容要专业、客观`;
+正确示例：
+2026中关村论坛年会探讨了具身智能产品从技术演示向实际应用落地的路径，提出从"功夫模式"向"工作模式"转变的发展方向。`;
   }
 
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {
