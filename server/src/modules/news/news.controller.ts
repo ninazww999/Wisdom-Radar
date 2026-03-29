@@ -155,25 +155,16 @@ export class NewsController {
     };
   }
 
-  // 根据分类获取不同的系统提示词
+  // 根据分类获取不同的系统提示词（原文内容不需要包含八维通分析）
   private getSystemPrompt(category: string): string {
-    const basePrompt = `你是一位专业的具身智能和空间智能领域分析师，服务于八维通科技有限公司。
-请根据提供的资讯标题和摘要，生成详细的内容分析。
+    return `你是一位专业的具身智能和空间智能领域分析师。
+请根据提供的资讯标题和摘要，生成详细的内容解读。
 
 输出格式要求：
-1. 内容：详细解读该资讯，包含背景、主要内容和分析（200-300字）
+1. 内容：详细解读该资讯，包含背景、主要内容和行业影响分析（200-300字）
 2. 不要使用 Markdown 格式，直接输出纯文本
-3. 语言要专业、客观`;
-
-    if (category === 'policy') {
-      return `${basePrompt}
-
-特别要求：必须在分析中包含"对八维通科技有限公司的影响"部分，分析该政策对公司发展的机遇、挑战和应对建议。`;
-    } else {
-      return `${basePrompt}
-
-特别要求：必须在分析中包含"对八维通的启发"部分，分析该资讯对八维通科技有限公司在技术创新、产品研发、市场拓展等方面的启发和参考价值。`;
-    }
+3. 语言要专业、客观
+4. 不要包含针对特定公司的分析或建议`;
   }
 
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {
