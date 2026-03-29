@@ -64,26 +64,33 @@ const IndexPage: FC = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [dailyQuote] = useState(getDailyQuote)
   
-  // 记录上次刷新时间，避免频繁刷新
-  const lastRefreshTimeRef = useRef<number>(0)
+  // 记录上次刷新的日期，确保每天第一次打开时刷新
+  const lastRefreshDateRef = useRef<string>('')
 
   useLoad(() => {
     console.log('Index page loaded.')
   })
 
-  // 每次页面显示时自动刷新资讯
+  // 获取当前日期字符串（YYYY-MM-DD）
+  const getTodayDateStr = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const date = String(now.getDate()).padStart(2, '0')
+    return `${year}-${month}-${date}`
+  }
+
+  // 每次页面显示时检查是否需要刷新
   useDidShow(() => {
-    const now = Date.now()
-    const timeSinceLastRefresh = now - lastRefreshTimeRef.current
+    const today = getTodayDateStr()
     
-    // 如果距离上次刷新超过 30 秒，才重新获取数据
-    // 这样可以避免从详情页返回时立即刷新，但又确保每次打开小程序都能获取最新资讯
-    if (timeSinceLastRefresh > 30000 || lastRefreshTimeRef.current === 0) {
-      console.log('[useDidShow] Refreshing news data...')
+    // 如果是今天第一次打开，自动刷新获取最新资讯
+    if (lastRefreshDateRef.current !== today) {
+      console.log('[useDidShow] New day detected, refreshing news...', today)
       fetchNews()
-      lastRefreshTimeRef.current = now
+      lastRefreshDateRef.current = today
     } else {
-      console.log('[useDidShow] Skip refresh, last refresh was', Math.floor(timeSinceLastRefresh / 1000), 'seconds ago')
+      console.log('[useDidShow] Already refreshed today:', today)
     }
   })
 
@@ -136,8 +143,8 @@ const IndexPage: FC = () => {
         const data = response.data as NewsResponse
         if (pageNum === 1) {
           setNewsList(data.list)
-          // 更新刷新时间
-          lastRefreshTimeRef.current = Date.now()
+          // 更新刷新日期为今天
+          lastRefreshDateRef.current = getTodayDateStr()
         } else {
           setNewsList(prev => [...prev, ...data.list])
         }
@@ -154,7 +161,6 @@ const IndexPage: FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    lastRefreshTimeRef.current = Date.now()
     await fetchNews(1, activeCategory || undefined)
   }
 
