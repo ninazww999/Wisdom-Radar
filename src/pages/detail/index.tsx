@@ -9,6 +9,7 @@ import {
   ArrowLeft, 
   Bookmark,
   Sparkles,
+  TrendingUp,
   Lightbulb
 } from 'lucide-react-taro'
 import { Network } from '@/network'
@@ -199,6 +200,20 @@ const DetailPage: FC = () => {
           <Text className="text-neutral-600 text-sm">{detail.publishTime}</Text>
         </View>
 
+        {/* Summary */}
+        <View className="mb-6">
+          <Text className="text-neutral-500 text-sm mb-2">摘要</Text>
+          <Text className="text-neutral-400 text-base leading-relaxed">{detail.summary}</Text>
+        </View>
+
+        {/* Content */}
+        {detail.content && detail.content !== detail.summary && (
+          <View className="mb-6">
+            <Text className="text-neutral-500 text-sm mb-2">原文内容</Text>
+            <Text className="text-neutral-300 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
+          </View>
+        )}
+
         {/* Bawiton Analysis Card */}
         <View className="mb-6">
           {bawitonAnalysis ? (
@@ -212,6 +227,20 @@ const DetailPage: FC = () => {
               </View>
               
               <CardContent className="pt-4">
+                {/* Key Points */}
+                <View className="mb-4">
+                  <View className="flex items-center gap-2 mb-2">
+                    <TrendingUp size={14} color="#10a37f" />
+                    <Text className="text-neutral-300 text-sm font-medium">关键要点</Text>
+                  </View>
+                  {bawitonAnalysis.keyPoints.map((point, idx) => (
+                    <View key={idx} className="flex gap-2 mb-2">
+                      <View className="w-2 h-2 rounded-full bg-neutral-600 mt-2 flex-shrink-0" />
+                      <Text className="text-neutral-400 text-sm leading-relaxed">{point}</Text>
+                    </View>
+                  ))}
+                </View>
+
                 {/* Bawiton Impact/Inspiration */}
                 {bawitonAnalysis.bawitonImpact && (
                   <View className="mb-4">
@@ -258,6 +287,25 @@ const DetailPage: FC = () => {
             </Button>
           )}
         </View>
+
+        {/* Related News */}
+        {detail.relatedNews && detail.relatedNews.length > 0 && (
+          <View className="mt-6 pt-6 border-t border-neutral-900">
+            <Text className="text-white font-medium mb-4">相关推荐</Text>
+            {detail.relatedNews.map((news, idx) => (
+              <Card key={idx} className="mb-3 bg-neutral-900 border-neutral-800 rounded-xl overflow-hidden">
+                <CardContent className="py-4 px-4">
+                  <Text className="text-neutral-200 text-sm mb-2 leading-relaxed">{news.title}</Text>
+                  <View className="flex items-center gap-2">
+                    <Text className="text-neutral-600 text-xs">{news.source}</Text>
+                    <Text className="text-neutral-700 text-xs">·</Text>
+                    <Text className="text-neutral-600 text-xs">{news.publishTime}</Text>
+                  </View>
+                </CardContent>
+              </Card>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Bottom Actions */}
