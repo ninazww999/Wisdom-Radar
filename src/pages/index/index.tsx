@@ -148,11 +148,11 @@ const IndexPage: FC = () => {
   return (
     <View className="min-h-screen bg-black">
       {/* Header */}
-      <View className="px-4 pt-6 pb-4">
+      <View className="px-4 pt-8 pb-5">
         <View className="flex items-center justify-between">
-          <View>
-            <Text className="text-neutral-500 text-xs">{getTodayDate()}</Text>
-            <Text className="text-white text-xl font-bold mt-1">智界雷达</Text>
+          <View className="flex-1">
+            <Text className="text-white text-2xl font-bold">智界雷达</Text>
+            <Text className="text-neutral-600 text-xs mt-1">{getTodayDate()}</Text>
           </View>
           <View 
             className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center"
