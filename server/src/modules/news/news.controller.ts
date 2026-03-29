@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { NewsService } from './news.service';
-import { SearchClient, Config } from 'coze-coding-dev-sdk';
+import { SearchClient, Config, LLMClient } from 'coze-coding-dev-sdk';
 
 @Controller('news')
 export class NewsController {
@@ -38,7 +38,7 @@ export class NewsController {
       title: item.title,
       summary: item.snippet,
       source: item.site_name || '未知来源',
-      publishTime: item.publish_time || new Date().toISOString(),
+      publishTime: item.publish_time || new Date().toISOString().split('T')[0],
       category: category || ['policy', 'industry', 'technology', 'market'][Math.floor(Math.random() * 4)],
       isHot: idx < 3
     }));
@@ -51,116 +51,154 @@ export class NewsController {
   }
 
   @Get('detail')
-  async getNewsDetail(@Query('id') id: string) {
-    console.log('[GET /api/news/detail] params:', { id });
+  async getNewsDetail(
+    @Query('id') id: string,
+    @Query('title') title?: string,
+    @Query('summary') summary?: string,
+  ) {
+    console.log('[GET /api/news/detail] params:', { id, title, summary });
     
-    // 模拟详情数据（实际应从数据库或搜索API获取）
+    // 如果有标题，使用 LLM 生成详细内容
+    if (title) {
+      try {
+        const llmClient = new LLMClient(new Config());
+        
+        const messages = [
+          {
+            role: 'system' as const,
+            content: `你是一位专业的具身智能和空间智能领域分析师。请根据提供的资讯标题和摘要，生成详细的内容分析。
+
+输出格式要求：
+1. 内容：详细解读该资讯，包含背景、主要内容和影响分析（200-300字）
+2. 不要使用 Markdown 格式，直接输出纯文本
+3. 语言要专业、客观`
+          },
+          {
+            role: 'user' as const,
+            content: `标题：${title}
+摘要：${summary || '暂无摘要'}
+
+请生成详细内容分析：`
+          }
+        ];
+        
+        const response = await llmClient.invoke(messages, { temperature: 0.7 });
+        
+        const relatedNews = await this.getRelatedNews(title);
+        
+        return {
+          id,
+          title,
+          source: '行业资讯',
+          publishTime: new Date().toISOString().split('T')[0],
+          category: 'policy',
+          summary: summary || '',
+          content: response.content,
+          relatedNews
+        };
+      } catch (error) {
+        console.error('LLM invoke error:', error);
+      }
+    }
+    
+    // 默认返回（兜底）
     return {
       id,
-      title: '工信部发布具身智能产业发展指导意见',
-      source: '工业和信息化部',
-      publishTime: '2024-01-15',
+      title: title || '资讯详情',
+      source: '行业资讯',
+      publishTime: new Date().toISOString().split('T')[0],
       category: 'policy',
-      summary: '工信部发布《关于推动具身智能产业发展的指导意见》，明确产业发展目标和重点任务，推动具身智能技术在制造业、服务业等领域的应用。',
-      content: `工信部近日发布《关于推动具身智能产业发展的指导意见》，这是我国首次针对具身智能产业发布的国家级政策文件。
-
-文件指出，到2025年，我国具身智能产业规模预计突破5000亿元，培育10家以上具有国际竞争力的龙头企业。
-
-主要内容包括：
-
-一、加快关键技术攻关
-重点突破智能感知、运动控制、人机交互等核心技术，推动机器人操作系统、智能芯片等关键零部件国产化。
-
-二、拓展应用场景
-在制造业、医疗健康、商业服务等领域开展具身智能应用示范，推动产业深度融合。
-
-三、完善产业生态
-建设具身智能创新中心，培育专业人才，完善标准体系。
-
-四、加强国际合作
-推动具身智能领域国际标准制定，深化产学研用合作。`,
-      aiAnalysis: {
-        keyPoints: [
-          '首次国家级具身智能产业政策',
-          '2025年产业规模目标5000亿元',
-          '重点突破核心技术实现国产化',
-          '推动多领域应用示范'
-        ],
-        impact: '该政策将加速我国具身智能产业发展，为相关企业提供政策支持和市场机遇，预计将带动产业链上下游投资增长。',
-        recommendation: '建议关注政策支持的细分领域，提前布局核心技术，把握产业融合机遇。'
-      },
-      relatedNews: [
-        {
-          id: 'news-2',
-          title: '特斯拉Optimus机器人最新进展',
-          source: 'TechCrunch',
-          publishTime: '2024-01-14'
-        },
-        {
-          id: 'news-3',
-          title: '空间计算技术路线图发布',
-          source: '中国电子技术标准化研究院',
-          publishTime: '2024-01-13'
-        },
-        {
-          id: 'news-4',
-          title: '具身智能市场研究报告发布',
-          source: '艾瑞咨询',
-          publishTime: '2024-01-12'
-        }
-      ]
+      summary: summary || '暂无摘要',
+      content: summary || '暂无详细内容',
+      relatedNews: []
     };
+  }
+
+  private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {
+    try {
+      const searchClient = new SearchClient(new Config());
+      const searchResult = await searchClient.webSearch('具身智能 最新动态', 3);
+      
+      return (searchResult.web_items || [])
+        .filter(item => item.title !== currentTitle)
+        .slice(0, 3)
+        .map((item, idx) => ({
+          id: `related-${Date.now()}-${idx}`,
+          title: item.title,
+          source: item.site_name || '未知来源',
+          publishTime: item.publish_time || new Date().toISOString().split('T')[0]
+        }));
+    } catch (error) {
+      console.error('Get related news error:', error);
+      return [];
+    }
   }
 
   @Post('analyze')
   async analyzeNews(@Body() body: { newsId: string; title: string; content: string }) {
     console.log('[POST /api/news/analyze] body:', { newsId: body.newsId, title: body.title });
     
-    const { LLMClient, Config } = await import('coze-coding-dev-sdk');
-    const llmClient = new LLMClient(new Config());
-    
-    const messages = [
-      {
-        role: 'system' as const,
-        content: `你是一位专业的行业分析师，擅长分析具身智能和空间智能领域的政策、技术和市场动态。
+    try {
+      const llmClient = new LLMClient(new Config());
+      
+      const messages = [
+        {
+          role: 'system' as const,
+          content: `你是一位专业的行业分析师，擅长分析具身智能和空间智能领域的政策、技术和市场动态。
 请从以下维度分析资讯内容：
-1. 关键要点（3-5个）
+1. 关键要点（3-5个，数组格式）
 2. 行业影响分析
 3. 给企业决策者的建议
 
-请用简洁专业的语言进行分析。`
-      },
-      {
-        role: 'user' as const,
-        content: `请分析以下资讯：
+请用简洁专业的语言进行分析，输出 JSON 格式：
+{
+  "keyPoints": ["要点1", "要点2", "要点3"],
+  "impact": "影响分析内容",
+  "recommendation": "决策建议内容"
+}`
+        },
+        {
+          role: 'user' as const,
+          content: `请分析以下资讯：
 
 标题：${body.title}
 
 内容：
 ${body.content}
 
-请提供：
-1. 关键要点（数组格式）
-2. 行业影响分析
-3. 决策建议`
+请提供 JSON 格式的分析结果：`
+        }
+      ];
+      
+      const response = await llmClient.invoke(messages, { temperature: 0.7 });
+      
+      // 尝试解析 JSON
+      try {
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
       }
-    ];
-    
-    const response = await llmClient.invoke(messages, { temperature: 0.7 });
-    
-    // 解析 AI 响应
-    const analysisText = response.content;
-    
-    // 简单解析（实际项目中应该更严谨）
-    return {
-      keyPoints: [
-        '具身智能产业迎来政策红利期',
-        '核心技术国产化成为重点',
-        '产业规模目标明确',
-        '应用场景不断拓展'
-      ],
-      impact: '该政策将为具身智能产业带来重大发展机遇，预计将推动相关企业加速技术攻关和市场布局。',
-      recommendation: '建议企业关注政策支持的细分领域，提前布局核心技术，把握产业融合发展机遇。'
-    };
+      
+      // 解析失败，返回默认结构
+      return {
+        keyPoints: [
+          '行业动态值得关注',
+          '技术发展持续演进',
+          '市场机遇逐步显现'
+        ],
+        impact: '该资讯反映了具身智能领域的最新发展动态，值得关注后续进展。',
+        recommendation: '建议持续关注相关领域的政策变化和技术突破。'
+      };
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      return {
+        keyPoints: ['分析生成失败，请稍后重试'],
+        impact: '暂时无法生成影响分析',
+        recommendation: '请稍后重试'
+      };
+    }
   }
 }

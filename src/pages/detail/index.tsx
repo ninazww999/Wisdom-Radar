@@ -1,5 +1,5 @@
 import { View, Text, ScrollView } from '@tarojs/components'
-import { useLoad, useRouter } from '@tarojs/taro'
+import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import type { FC } from 'react'
 import { Button } from '@/components/ui/button'
@@ -76,18 +76,61 @@ const DetailPage: FC = () => {
   const fetchDetail = async (id: string) => {
     try {
       setLoading(true)
-      const response = await Network.request({
-        url: '/api/news/detail',
-        method: 'GET',
-        data: { id }
-      })
-      console.log('Fetch detail response:', response)
-      if (response.data) {
-        setDetail(response.data)
-        setAiAnalysis(response.data.aiAnalysis || null)
+      
+      // 优先读取缓存数据（从首页跳转时存储）
+      const cachedNews = Taro.getStorageSync('currentNews')
+      console.log('Cached news:', cachedNews)
+      
+      if (cachedNews && cachedNews.id === id) {
+        // 使用缓存数据，并调用 API 获取完整详情
+        const response = await Network.request({
+          url: '/api/news/detail',
+          method: 'GET',
+          data: { id, title: cachedNews.title, summary: cachedNews.summary }
+        })
+        console.log('Fetch detail response:', response)
+        
+        if (response.data) {
+          // 合并缓存数据和 API 返回数据
+          setDetail({
+            ...cachedNews,
+            content: response.data.content || cachedNews.summary,
+            aiAnalysis: response.data.aiAnalysis || null,
+            relatedNews: response.data.relatedNews || []
+          })
+          setAiAnalysis(response.data.aiAnalysis || null)
+        } else {
+          // API 无返回，仅使用缓存数据
+          setDetail({
+            ...cachedNews,
+            content: cachedNews.summary,
+            relatedNews: []
+          })
+        }
+      } else {
+        // 无缓存，直接调用 API
+        const response = await Network.request({
+          url: '/api/news/detail',
+          method: 'GET',
+          data: { id }
+        })
+        console.log('Fetch detail response:', response)
+        if (response.data) {
+          setDetail(response.data)
+          setAiAnalysis(response.data.aiAnalysis || null)
+        }
       }
     } catch (error) {
       console.error('Fetch detail error:', error)
+      // 出错时尝试使用缓存
+      const cachedNews = Taro.getStorageSync('currentNews')
+      if (cachedNews) {
+        setDetail({
+          ...cachedNews,
+          content: cachedNews.summary,
+          relatedNews: []
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -101,7 +144,7 @@ const DetailPage: FC = () => {
       const response = await Network.request({
         url: '/api/news/analyze',
         method: 'POST',
-        data: { newsId: detail.id, title: detail.title, content: detail.content }
+        data: { newsId: detail.id, title: detail.title, content: detail.content || detail.summary }
       })
       console.log('AI analysis response:', response)
       if (response.data) {
@@ -112,6 +155,10 @@ const DetailPage: FC = () => {
     } finally {
       setAiLoading(false)
     }
+  }
+
+  const handleBack = () => {
+    Taro.navigateBack()
   }
 
   const handleBookmark = () => {
@@ -147,7 +194,10 @@ const DetailPage: FC = () => {
       {/* Header with Gradient */}
       <View className="bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 px-5 py-4 relative">
         <View className="flex items-center gap-4">
-          <View className="w-10 h-10 rounded-full bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center">
+          <View 
+            className="w-10 h-10 rounded-full bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center"
+            onClick={handleBack}
+          >
             <ArrowLeft size={20} color="#ffffff" />
           </View>
           <Text className="flex-1 text-white font-semibold">资讯详情</Text>
@@ -184,11 +234,13 @@ const DetailPage: FC = () => {
         </Card>
 
         {/* Content Card */}
-        <Card className="mb-4 bg-gray-900 border-gray-800 rounded-2xl">
-          <CardContent className="py-4">
-            <Text className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
-          </CardContent>
-        </Card>
+        {detail.content && detail.content !== detail.summary && (
+          <Card className="mb-4 bg-gray-900 border-gray-800 rounded-2xl">
+            <CardContent className="py-4">
+              <Text className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
+            </CardContent>
+          </Card>
+        )}
 
         {/* AI Analysis */}
         {aiAnalysis ? (
@@ -250,7 +302,7 @@ const DetailPage: FC = () => {
         <Separator className="my-5 bg-gray-800" />
 
         {/* Related News */}
-        {detail.relatedNews.length > 0 && (
+        {detail.relatedNews && detail.relatedNews.length > 0 && (
           <View>
             <Text className="text-white text-base font-semibold mb-4">相关推荐</Text>
             {detail.relatedNews.map((news, idx) => (

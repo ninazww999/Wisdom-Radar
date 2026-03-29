@@ -133,9 +133,11 @@ const IndexPage: FC = () => {
     }
   }
 
-  const handleNewsClick = (id: string) => {
+  const handleNewsClick = (news: NewsItem) => {
+    // 缓存资讯数据，确保详情页显示一致
+    Taro.setStorageSync('currentNews', news)
     Taro.navigateTo({
-      url: `/pages/detail/index?id=${id}`
+      url: `/pages/detail/index?id=${news.id}`
     })
   }
 
@@ -257,7 +259,7 @@ const IndexPage: FC = () => {
               <Card 
                 key={news.id} 
                 className="mb-4 bg-gray-900 border-gray-800 hover:border-gray-700 transition-all overflow-hidden"
-                onClick={() => handleNewsClick(news.id)}
+                onClick={() => handleNewsClick(news)}
               >
                 <CardContent className="py-4 px-4">
                   <View className="flex gap-3">
