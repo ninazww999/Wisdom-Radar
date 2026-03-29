@@ -172,36 +172,22 @@ export class NewsController {
       try {
         const llmClient = new LLMClient(new Config());
         
-        // 根据分类生成不同的内容
-        const systemPrompt = this.getSystemPrompt(category || 'policy');
-        
-        const messages = [
-          {
-            role: 'system' as const,
-            content: systemPrompt
-          },
-          {
-            role: 'user' as const,
-            content: `标题：${title}`
-          }
-        ];
-        
-        const response = await llmClient.invoke(messages, { temperature: 0.7 });
-        
-        // LLM直接返回纯文本摘要
-        const llmSummary = response.content?.trim() || summary || '';
-        
         // 生成详细内容
-        const contentPrompt = `你是一位专业的具身智能和空间智能领域分析师。
+        const systemPrompt = `你是一位专业的具身智能和空间智能领域分析师。
 请根据资讯标题，生成详细的内容解读（200-300字）。
-要求：专业、客观，包含背景、主要内容和行业影响分析。不要使用Markdown格式。`;
+
+输出要求：
+1. 直接输出内容，不要添加任何标题或前缀
+2. 包含背景、主要内容和行业影响分析
+3. 专业、客观，不要使用Markdown格式
+4. 不要包含标题、来源、时间、作者等元信息`;
         
-        const contentResponse = await llmClient.invoke([
-          { role: 'system', content: contentPrompt },
+        const response = await llmClient.invoke([
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: `标题：${title}` }
         ], { temperature: 0.7 });
         
-        const llmContent = contentResponse.content || llmSummary;
+        const llmContent = response.content || summary || '';
         
         const relatedNews = await this.getRelatedNews(title);
         
@@ -211,7 +197,7 @@ export class NewsController {
           source: '行业资讯',
           publishTime: new Date().toISOString().split('T')[0],
           category: category || 'policy',
-          summary: llmSummary,
+          summary: summary || '',
           content: llmContent,
           relatedNews
         };
@@ -231,23 +217,6 @@ export class NewsController {
       content: summary || '暂无详细内容',
       relatedNews: []
     };
-  }
-
-  // 根据分类获取不同的系统提示词（原文内容不需要包含八维通分析）
-  private getSystemPrompt(category: string): string {
-    return `你是一位专业的行业分析师。请根据资讯标题，生成一段纯粹的内容摘要。
-
-输出要求：
-1. 只输出一句话总结（30-50字），说明核心事实是什么
-2. 禁止包含：标题、来源、时间、作者、标签、链接等元信息
-3. 禁止包含：网页元素如"听全文"、"查看原文"等
-4. 直接输出摘要文本，不要JSON格式，不要任何标记
-
-错误示例（包含了标题、来源、时间）：
-中关村论坛年会｜推动具身智能产品...中国经济网 2026-03-28...
-
-正确示例：
-2026中关村论坛年会探讨了具身智能产品从技术演示向实际应用落地的路径，提出从"功夫模式"向"工作模式"转变的发展方向。`;
   }
 
   private async getRelatedNews(currentTitle: string): Promise<Array<{ id: string; title: string; source: string; publishTime: string }>> {

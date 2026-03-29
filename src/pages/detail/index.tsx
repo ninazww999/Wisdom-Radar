@@ -200,14 +200,8 @@ const DetailPage: FC = () => {
           <Text className="text-neutral-600 text-sm">{detail.publishTime}</Text>
         </View>
 
-        {/* Summary */}
-        <View className="mb-6">
-          <Text className="text-neutral-300 text-sm font-medium mb-3 block">摘要</Text>
-          <Text className="text-neutral-400 text-base leading-relaxed">{detail.summary}</Text>
-        </View>
-
         {/* Content */}
-        {detail.content && detail.content !== detail.summary && (
+        {detail.content && (
           <View className="mb-6">
             <Text className="text-neutral-300 text-sm font-medium mb-3 block">原文内容</Text>
             <Text className="text-neutral-400 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
