@@ -7,10 +7,21 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
   ArrowLeft, 
-  Bookmark
+  Bookmark,
+  Sparkles,
+  TrendingUp,
+  Lightbulb
 } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
+
+interface BawitonAnalysis {
+  keyPoints: string[]
+  impact: string
+  bawitonImpact?: string
+  bawitonInspiration?: string
+  recommendation: string
+}
 
 interface NewsDetail {
   id: string
@@ -39,6 +50,8 @@ const DetailPage: FC = () => {
   const router = useRouter()
   const [detail, setDetail] = useState<NewsDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [bawitonAnalysis, setBawitonAnalysis] = useState<BawitonAnalysis | null>(null)
   const [isBookmarked, setIsBookmarked] = useState(false)
 
   useLoad(() => {
@@ -106,6 +119,32 @@ const DetailPage: FC = () => {
     }
   }
 
+  const fetchBawitonAnalysis = async () => {
+    if (!detail || bawitonAnalysis) return
+    
+    try {
+      setAnalysisLoading(true)
+      const response = await Network.request({
+        url: '/api/news/analyze',
+        method: 'POST',
+        data: { 
+          newsId: detail.id, 
+          title: detail.title, 
+          content: detail.content || detail.summary,
+          category: detail.category 
+        }
+      })
+      console.log('Bawiton analysis response:', response)
+      if (response.data) {
+        setBawitonAnalysis(response.data)
+      }
+    } catch (error) {
+      console.error('Bawiton analysis error:', error)
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }
+
   const handleBack = () => {
     Taro.navigateBack()
   }
@@ -136,6 +175,13 @@ const DetailPage: FC = () => {
         </View>
       </View>
     )
+  }
+
+  const getCategoryTitle = () => {
+    if (detail.category === 'policy') {
+      return '对八维通的影响'
+    }
+    return '对八维通的启发'
   }
 
   return (
@@ -177,6 +223,78 @@ const DetailPage: FC = () => {
             <Text className="text-neutral-300 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
           </View>
         )}
+
+        {/* Bawiton Analysis Card */}
+        <View className="mt-4 mb-6">
+          {bawitonAnalysis ? (
+            <Card className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
+              {/* Card Header */}
+              <View className="px-4 py-3 border-b border-neutral-800 flex items-center gap-2">
+                <Sparkles size={16} color="#10a37f" />
+                <Text className="text-white font-medium">{getCategoryTitle()}</Text>
+              </View>
+              
+              <CardContent className="pt-4">
+                {/* Key Points */}
+                <View className="mb-4">
+                  <View className="flex items-center gap-2 mb-2">
+                    <TrendingUp size={14} color="#10a37f" />
+                    <Text className="text-neutral-300 text-sm font-medium">关键要点</Text>
+                  </View>
+                  {bawitonAnalysis.keyPoints.map((point, idx) => (
+                    <View key={idx} className="flex gap-2 mb-2">
+                      <View className="w-2 h-2 rounded-full bg-neutral-500 mt-2 flex-shrink-0" />
+                      <Text className="text-neutral-400 text-sm leading-relaxed">{point}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Bawiton Impact/Inspiration */}
+                {bawitonAnalysis.bawitonImpact && (
+                  <View className="mb-4">
+                    <View className="flex items-center gap-2 mb-2">
+                      <Lightbulb size={14} color="#10a37f" />
+                      <Text className="text-neutral-300 text-sm font-medium">对八维通的影响</Text>
+                    </View>
+                    <Text className="text-neutral-400 text-sm leading-relaxed">{bawitonAnalysis.bawitonImpact}</Text>
+                  </View>
+                )}
+
+                {bawitonAnalysis.bawitonInspiration && (
+                  <View className="mb-4">
+                    <View className="flex items-center gap-2 mb-2">
+                      <Lightbulb size={14} color="#10a37f" />
+                      <Text className="text-neutral-300 text-sm font-medium">对八维通的启发</Text>
+                    </View>
+                    <Text className="text-neutral-400 text-sm leading-relaxed">{bawitonAnalysis.bawitonInspiration}</Text>
+                  </View>
+                )}
+
+                {/* Recommendation */}
+                <View>
+                  <View className="flex items-center gap-2 mb-2">
+                    <View className="w-4 h-4 flex items-center justify-center">
+                      <View className="w-2 h-2 rounded-full bg-neutral-500" />
+                    </View>
+                    <Text className="text-neutral-300 text-sm font-medium">决策建议</Text>
+                  </View>
+                  <Text className="text-neutral-400 text-sm leading-relaxed">{bawitonAnalysis.recommendation}</Text>
+                </View>
+              </CardContent>
+            </Card>
+          ) : (
+            <Button
+              className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-xl h-12"
+              onClick={fetchBawitonAnalysis}
+              disabled={analysisLoading}
+            >
+              <View className="flex items-center gap-2">
+                <Sparkles size={18} color={analysisLoading ? '#525252' : '#10a37f'} />
+                <Text className="font-medium">{analysisLoading ? '分析中...' : '获取八维通洞察'}</Text>
+              </View>
+            </Button>
+          )}
+        </View>
 
         {/* Related News */}
         {detail.relatedNews && detail.relatedNews.length > 0 && (
