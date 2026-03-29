@@ -35,22 +35,44 @@ export class NewsController {
     // 搜索更多结果以便筛选
     const searchResult = await searchClient.webSearch(query, 30);
     
-    // 科普类关键词（用于过滤）
+    // 科普类、百科类关键词（用于过滤）
     const excludeKeywords = [
+      // 科普类
       '概念', '是什么', '什么是', '入门', '科普', '介绍', '基础', 
       '原理', '定义', '详解', '全面了解', '一文读懂', '小白', '初学者',
-      '教程', '指南', '如何理解', '解读（非新闻）'
+      '教程', '指南', '如何理解',
+      // 百科类
+      '百科', '词条', '简介', '维基', 'wiki', 'baike',
+      // 问答类
+      '问答', '知乎', '百度知道'
     ];
     
-    // 判断是否为科普类文章
-    const isExcluded = (title: string, snippet: string): boolean => {
+    // 过滤低质量来源
+    const excludeSources = [
+      '百科', 'baike', 'wiki', '知乎', '知道', '问答'
+    ];
+    
+    // 判断是否为科普类/百科类文章
+    const isExcluded = (title: string, snippet: string, source: string): boolean => {
       const text = (title + ' ' + snippet).toLowerCase();
-      return excludeKeywords.some(k => text.includes(k.toLowerCase()));
+      const sourceLower = source.toLowerCase();
+      
+      // 过滤标题/摘要包含排除关键词的
+      if (excludeKeywords.some(k => text.includes(k.toLowerCase()))) {
+        return true;
+      }
+      
+      // 过滤来源为百科、问答类平台的
+      if (excludeSources.some(s => sourceLower.includes(s.toLowerCase()))) {
+        return true;
+      }
+      
+      return false;
     };
     
     // 处理并排序资讯列表
     let newsList = (searchResult.web_items || [])
-      .filter(item => !isExcluded(item.title, item.snippet || '')) // 过滤科普类文章
+      .filter(item => !isExcluded(item.title, item.snippet || '', item.site_name || '')) // 过滤科普类/百科类文章
       .map((item, idx) => {
         // 解析发布时间
         let publishDate = new Date();
