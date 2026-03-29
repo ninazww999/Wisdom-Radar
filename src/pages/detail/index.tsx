@@ -9,7 +9,6 @@ import {
   ArrowLeft, 
   Bookmark,
   Sparkles,
-  TrendingUp,
   Lightbulb
 } from 'lucide-react-taro'
 import { Network } from '@/network'
@@ -17,7 +16,6 @@ import './index.css'
 
 interface BawitonAnalysis {
   keyPoints: string[]
-  impact: string
   bawitonImpact?: string
   bawitonInspiration?: string
   recommendation: string
@@ -153,10 +151,6 @@ const DetailPage: FC = () => {
     setIsBookmarked(!isBookmarked)
   }
 
-  const handleShare = () => {
-    console.log('Share clicked')
-  }
-
   if (loading) {
     return (
       <View className="min-h-screen bg-black">
@@ -175,13 +169,6 @@ const DetailPage: FC = () => {
         </View>
       </View>
     )
-  }
-
-  const getCategoryTitle = () => {
-    if (detail.category === 'policy') {
-      return '对八维通的影响'
-    }
-    return '对八维通的启发'
   }
 
   return (
@@ -212,49 +199,25 @@ const DetailPage: FC = () => {
           <Text className="text-neutral-600 text-sm">{detail.publishTime}</Text>
         </View>
 
-        {/* Summary */}
-        <View className="mb-6">
-          <Text className="text-neutral-400 text-base leading-relaxed">{detail.summary}</Text>
-        </View>
-
-        {/* Content */}
-        {detail.content && detail.content !== detail.summary && (
-          <View className="mb-6">
-            <Text className="text-neutral-300 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
-          </View>
-        )}
-
         {/* Bawiton Analysis Card */}
-        <View className="mt-4 mb-6">
+        <View className="mb-6">
           {bawitonAnalysis ? (
             <Card className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
               {/* Card Header */}
               <View className="px-4 py-3 border-b border-neutral-800 flex items-center gap-2">
                 <Sparkles size={16} color="#10a37f" />
-                <Text className="text-white font-medium">{getCategoryTitle()}</Text>
+                <Text className="text-white font-medium">
+                  {detail.category === 'policy' ? '对八维通的影响' : '对八维通的启发'}
+                </Text>
               </View>
               
               <CardContent className="pt-4">
-                {/* Key Points */}
-                <View className="mb-4">
-                  <View className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={14} color="#10a37f" />
-                    <Text className="text-neutral-300 text-sm font-medium">关键要点</Text>
-                  </View>
-                  {bawitonAnalysis.keyPoints.map((point, idx) => (
-                    <View key={idx} className="flex gap-2 mb-2">
-                      <View className="w-2 h-2 rounded-full bg-neutral-500 mt-2 flex-shrink-0" />
-                      <Text className="text-neutral-400 text-sm leading-relaxed">{point}</Text>
-                    </View>
-                  ))}
-                </View>
-
                 {/* Bawiton Impact/Inspiration */}
                 {bawitonAnalysis.bawitonImpact && (
                   <View className="mb-4">
                     <View className="flex items-center gap-2 mb-2">
                       <Lightbulb size={14} color="#10a37f" />
-                      <Text className="text-neutral-300 text-sm font-medium">对八维通的影响</Text>
+                      <Text className="text-neutral-300 text-sm font-medium">影响分析</Text>
                     </View>
                     <Text className="text-neutral-400 text-sm leading-relaxed">{bawitonAnalysis.bawitonImpact}</Text>
                   </View>
@@ -264,7 +227,7 @@ const DetailPage: FC = () => {
                   <View className="mb-4">
                     <View className="flex items-center gap-2 mb-2">
                       <Lightbulb size={14} color="#10a37f" />
-                      <Text className="text-neutral-300 text-sm font-medium">对八维通的启发</Text>
+                      <Text className="text-neutral-300 text-sm font-medium">启发分析</Text>
                     </View>
                     <Text className="text-neutral-400 text-sm leading-relaxed">{bawitonAnalysis.bawitonInspiration}</Text>
                   </View>
@@ -295,25 +258,6 @@ const DetailPage: FC = () => {
             </Button>
           )}
         </View>
-
-        {/* Related News */}
-        {detail.relatedNews && detail.relatedNews.length > 0 && (
-          <View className="mt-6 pt-6 border-t border-neutral-900">
-            <Text className="text-white font-medium mb-4">相关推荐</Text>
-            {detail.relatedNews.map((news, idx) => (
-              <Card key={idx} className="mb-3 bg-neutral-900 border-neutral-800 rounded-xl overflow-hidden">
-                <CardContent className="py-4 px-4">
-                  <Text className="text-neutral-200 text-sm mb-2 leading-relaxed">{news.title}</Text>
-                  <View className="flex items-center gap-2">
-                    <Text className="text-neutral-600 text-xs">{news.source}</Text>
-                    <Text className="text-neutral-700 text-xs">·</Text>
-                    <Text className="text-neutral-600 text-xs">{news.publishTime}</Text>
-                  </View>
-                </CardContent>
-              </Card>
-            ))}
-          </View>
-        )}
       </ScrollView>
 
       {/* Bottom Actions */}
@@ -342,7 +286,7 @@ const DetailPage: FC = () => {
         </Button>
         <Button
           className="flex-1 bg-white text-black rounded-xl h-12 border-0"
-          onClick={handleShare}
+          onClick={() => console.log('Share clicked')}
         >
           <Text className="font-medium">分享</Text>
         </Button>
