@@ -115,10 +115,18 @@ export class NewsController {
     
     console.log(`[After Dedup] Unique items: ${uniqueItems.length}`);
     
-    // 过滤低质量内容
-    const filteredItems = uniqueItems.filter(item => 
-      !this.isLowQuality(item.title, item.snippet || '', item.site_name || '')
-    );
+    // 过滤低质量内容和不相关内容
+    const filteredItems = uniqueItems.filter(item => {
+      // 先过滤低质量内容
+      if (this.isLowQuality(item.title, item.snippet || '', item.site_name || '')) {
+        return false;
+      }
+      // 再过滤不相关内容
+      if (!this.isRelevantContent(item.title, item.snippet || '', item.site_name || '')) {
+        return false;
+      }
+      return true;
+    });
     
     console.log(`[After Filter] Quality items: ${filteredItems.length}`);
     
@@ -187,33 +195,36 @@ export class NewsController {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
     
-    // 基础搜索词 - 确保获取最新资讯
+    // 基础搜索词 - 确保获取最新资讯，强制包含核心关键词
     const baseQueries = [
-      // 热点新闻
-      '具身智能 最新新闻 今日热点',
-      '人形机器人 最新动态 行业热点',
-      '空间智能 数字孪生 最新进展',
+      // 热点新闻（强制包含"具身智能"或"人形机器人"）
+      '具身智能 最新新闻 今日热点 2025',
+      '人形机器人 最新动态 行业热点 2025',
+      '空间智能 数字孪生 最新进展 2025',
       // 技术突破
       '具身智能 技术突破 最新发布',
-      '机器人 AI大模型 最新应用',
+      '人形机器人 产品发布 商业化落地',
+      // 企业动态
+      '特斯拉机器人 擎天柱 最新消息',
+      '优必选 宇树科技 智元机器人 最新动态',
     ];
     
-    // 分类搜索词
+    // 分类搜索词 - 强制包含核心关键词
     const categoryQueries: Record<string, string[]> = {
       policy: [
-        '具身智能 政策 法规 最新发布',
-        '人形机器人 国家政策 指导意见',
-        '人工智能 产业政策 最新通知',
+        '具身智能 国家政策 法规 2025',
+        '人形机器人 产业政策 指导意见',
+        '人工智能 机器人 政策支持 最新',
       ],
       industry: [
         '具身智能 企业动态 产品发布',
-        '人形机器人 公司融资 商业化',
-        '机器人 行业应用 最新落地',
+        '人形机器人 公司融资 商业化进展',
+        '机器人 智能制造 行业应用',
       ],
       technology: [
-        '具身智能 技术创新 研发突破',
-        '人形机器人 核心技术 专利发布',
-        '空间计算 多模态 最新技术',
+        '具身智能 技术突破 研发进展',
+        '人形机器人 核心技术 专利创新',
+        '空间计算 数字孪生 多模态技术',
       ],
       market: [
         '具身智能 市场趋势 投资融资',
@@ -251,6 +262,59 @@ export class NewsController {
     }
     
     return false;
+  }
+
+  // 判断内容是否与具身智能、空间智能相关
+  private isRelevantContent(title: string, snippet: string, source: string): boolean {
+    const text = (title + ' ' + snippet).toLowerCase();
+    const sourceLower = source.toLowerCase();
+    
+    // 核心关键词：必须包含至少一个
+    const coreKeywords = [
+      '具身智能', '空间智能', '空间计算', '数字孪生',
+      '人形机器人', '仿生机器人', '服务机器人', '智能机器人',
+      '多模态', '视觉感知', '运动控制', '灵巧手',
+      '特斯拉机器人', '擎天柱', 'Figure', 'Boston Dynamics',
+      '优必选', '宇树科技', '智元机器人', '小米机器人',
+      '大模型', 'AI模型', '人工智能', '机器学习',
+      '智能制造', '智慧城市', '智慧轨交', '自动驾驶'
+    ];
+    
+    // 检查是否包含核心关键词
+    const hasCoreKeyword = coreKeywords.some(k => text.includes(k));
+    if (!hasCoreKeyword) {
+      console.log(`[过滤-不相关] ${title.slice(0, 30)}...`);
+      return false;
+    }
+    
+    // 黑名单关键词：包含则直接排除
+    const blacklistKeywords = [
+      // 金融股票类
+      '股票', '炒股', '股民', 'A股', '港股', '美股', '涨停', '跌停',
+      '金叉', '死叉', 'K线', '均线', 'MACD', 'KDJ', 'VOL',
+      '技术分析', '走势分析', '行情分析', '盘面分析',
+      '医药股', '医疗股', '概念股', '龙头股',
+      // 医疗健康类（排除医疗资讯，但保留医疗机器人相关）
+      '仟源医药', '恒瑞医药', '药明康德', '片仔癀',
+      '临床实验', '药物研发', '新药审批',
+      // 财经类（排除纯财经资讯）
+      '理财', '基金', '期货', '外汇', '债券',
+      '投资攻略', '财富管理', '资产配置',
+      // 娱乐八卦类
+      '明星', '八卦', '绯闻', '综艺', '电视剧',
+      // 其他不相关
+      '招聘', '求职', '简历', '面试技巧',
+      '美食', '旅游', '房产', '汽车评测'
+    ];
+    
+    // 检查是否包含黑名单关键词
+    const hasBlacklistKeyword = blacklistKeywords.some(k => text.includes(k) || sourceLower.includes(k));
+    if (hasBlacklistKeyword) {
+      console.log(`[过滤-黑名单] ${title.slice(0, 30)}...`);
+      return false;
+    }
+    
+    return true;
   }
 
   // 清理摘要
