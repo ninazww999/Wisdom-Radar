@@ -1,5 +1,5 @@
 import { View, Text } from '@tarojs/components'
-import { useLoad } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import type { FC } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,39 +17,50 @@ import {
 } from 'lucide-react-taro'
 import './index.css'
 
+interface BookmarkItem {
+  id: string
+  title: string
+  source: string
+  publishTime: string
+  category: 'policy' | 'industry' | 'technology' | 'market'
+  summary: string
+  bookmarkedAt: string
+}
+
 interface UserProfile {
   nickname: string
   subscribedCategories: string[]
   notificationEnabled: boolean
-  readingHistory: Array<{
-    id: string
-    title: string
-    readTime: string
-  }>
+}
+
+const categoryLabels: Record<string, string> = {
+  policy: '政策',
+  industry: '行业',
+  technology: '技术',
+  market: '市场'
 }
 
 const ProfilePage: FC = () => {
   const [profile, setProfile] = useState<UserProfile>({
     nickname: '用户',
     subscribedCategories: ['policy', 'industry', 'technology', 'market'],
-    notificationEnabled: true,
-    readingHistory: [
-      { id: '1', title: '工信部发布具身智能发展指导意见', readTime: '2024-01-15' },
-      { id: '2', title: '特斯拉Optimus机器人最新进展', readTime: '2024-01-14' },
-      { id: '3', title: '空间计算技术路线图发布', readTime: '2024-01-13' }
-    ]
+    notificationEnabled: true
   })
-
-  const categoryLabels: Record<string, string> = {
-    policy: '政策',
-    industry: '行业',
-    technology: '技术',
-    market: '市场'
-  }
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([])
 
   useLoad(() => {
     console.log('Profile page loaded.')
   })
+
+  useDidShow(() => {
+    // 每次显示页面时重新加载收藏列表
+    loadBookmarks()
+  })
+
+  const loadBookmarks = () => {
+    const savedBookmarks = Taro.getStorageSync('bookmarks') || []
+    setBookmarks(savedBookmarks)
+  }
 
   const handleNotificationToggle = (enabled: boolean) => {
     setProfile({ ...profile, notificationEnabled: enabled })
@@ -57,6 +68,20 @@ const ProfilePage: FC = () => {
 
   const handleLogout = () => {
     console.log('Logout clicked')
+  }
+
+  const handleBookmarkClick = (item: BookmarkItem) => {
+    Taro.setStorageSync('currentNews', item)
+    Taro.navigateTo({
+      url: `/pages/detail/index?id=${item.id}`
+    })
+  }
+
+  const handleRemoveBookmark = (id: string) => {
+    const newBookmarks = bookmarks.filter(item => item.id !== id)
+    Taro.setStorageSync('bookmarks', newBookmarks)
+    setBookmarks(newBookmarks)
+    Taro.showToast({ title: '已取消收藏', icon: 'none' })
   }
 
   return (
@@ -89,6 +114,53 @@ const ProfilePage: FC = () => {
               </View>
             </View>
           </CardContent>
+        </Card>
+
+        {/* Bookmarks */}
+        <Card className="mb-4 bg-neutral-900 border-neutral-800 rounded-xl">
+          <View className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
+            <Text className="text-white font-medium">我的收藏</Text>
+            <Text className="text-neutral-500 text-xs">{bookmarks.length} 篇</Text>
+          </View>
+          {bookmarks.length > 0 ? (
+            <View>
+              {bookmarks.slice(0, 5).map((item, idx) => (
+                <View 
+                  key={idx} 
+                  className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 last:border-b-0"
+                  onClick={() => handleBookmarkClick(item)}
+                >
+                  <View className="flex-1 mr-3">
+                    <Text className="text-neutral-200 text-sm mb-1 leading-relaxed line-clamp-2">{item.title}</Text>
+                    <View className="flex items-center gap-2">
+                      <Badge className="bg-neutral-800 text-neutral-400 text-xs px-2 py-1 rounded border-0">
+                        {categoryLabels[item.category]}
+                      </Badge>
+                      <Text className="text-neutral-600 text-xs">{item.source}</Text>
+                    </View>
+                  </View>
+                  <View 
+                    className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemoveBookmark(item.id)
+                    }}
+                  >
+                    <Bookmark size={16} color="#10a37f" filled />
+                  </View>
+                </View>
+              ))}
+              {bookmarks.length > 5 && (
+                <View className="px-4 py-3 flex items-center justify-center">
+                  <Text className="text-neutral-500 text-xs">查看全部 {bookmarks.length} 篇</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View className="px-4 py-8 flex items-center justify-center">
+              <Text className="text-neutral-600 text-sm">暂无收藏</Text>
+            </View>
+          )}
         </Card>
 
         {/* Subscription */}
@@ -146,17 +218,6 @@ const ProfilePage: FC = () => {
               <ChevronRight size={18} color="#525252" />
             </View>
 
-            {/* Bookmarks */}
-            <View className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-              <View className="flex items-center gap-3">
-                <View className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center">
-                  <Bookmark size={18} color="#a3a3a3" />
-                </View>
-                <Text className="text-neutral-200 text-sm">我的收藏</Text>
-              </View>
-              <ChevronRight size={18} color="#525252" />
-            </View>
-
             {/* Privacy */}
             <View className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
               <View className="flex items-center gap-3">
@@ -178,28 +239,6 @@ const ProfilePage: FC = () => {
               </View>
               <ChevronRight size={18} color="#525252" />
             </View>
-          </View>
-        </Card>
-
-        {/* Recent Reading */}
-        <Card className="mb-4 bg-neutral-900 border-neutral-800 rounded-xl">
-          <View className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
-            <Text className="text-white font-medium">最近阅读</Text>
-            <ChevronRight size={18} color="#525252" />
-          </View>
-          <View>
-            {profile.readingHistory.map((item, idx) => (
-              <View 
-                key={idx} 
-                className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 last:border-b-0"
-              >
-                <View className="flex-1">
-                  <Text className="text-neutral-200 text-sm mb-1 leading-relaxed">{item.title}</Text>
-                  <Text className="text-neutral-600 text-xs">{item.readTime}</Text>
-                </View>
-                <ChevronRight size={16} color="#404040" />
-              </View>
-            ))}
           </View>
         </Card>
 

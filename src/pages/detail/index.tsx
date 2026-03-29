@@ -64,6 +64,22 @@ const DetailPage: FC = () => {
     }
   }, [router.params])
 
+  // 详情加载完成后自动获取八维通洞察
+  useEffect(() => {
+    if (detail && !bawitonAnalysis && !analysisLoading) {
+      fetchBawitonAnalysis()
+    }
+  }, [detail])
+
+  // 检查是否已收藏
+  useEffect(() => {
+    if (detail) {
+      const bookmarks = Taro.getStorageSync('bookmarks') || []
+      const isExists = bookmarks.some((item: any) => item.id === detail.id)
+      setIsBookmarked(isExists)
+    }
+  }, [detail])
+
   const fetchDetail = async (id: string) => {
     try {
       setLoading(true)
@@ -149,7 +165,33 @@ const DetailPage: FC = () => {
   }
 
   const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked)
+    if (!detail) return
+    
+    const bookmarks = Taro.getStorageSync('bookmarks') || []
+    const isExists = bookmarks.some((item: any) => item.id === detail.id)
+    
+    if (isExists) {
+      // 取消收藏
+      const newBookmarks = bookmarks.filter((item: any) => item.id !== detail.id)
+      Taro.setStorageSync('bookmarks', newBookmarks)
+      setIsBookmarked(false)
+      Taro.showToast({ title: '已取消收藏', icon: 'none' })
+    } else {
+      // 添加收藏
+      const bookmarkItem = {
+        id: detail.id,
+        title: detail.title,
+        source: detail.source,
+        publishTime: detail.publishTime,
+        category: detail.category,
+        summary: detail.summary,
+        bookmarkedAt: new Date().toISOString()
+      }
+      bookmarks.unshift(bookmarkItem)
+      Taro.setStorageSync('bookmarks', bookmarks)
+      setIsBookmarked(true)
+      Taro.showToast({ title: '收藏成功', icon: 'success' })
+    }
   }
 
   if (loading) {
@@ -220,16 +262,22 @@ const DetailPage: FC = () => {
 
         {/* Bawiton Analysis Card */}
         <View className="mb-6">
-          {bawitonAnalysis ? (
-            <Card className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-              {/* Card Header */}
-              <View className="px-4 py-3 border-b border-neutral-800 flex items-center gap-2">
-                <Sparkles size={16} color="#10a37f" />
-                <Text className="text-white font-medium">
-                  {detail.category === 'policy' ? '对八维通的影响' : '对八维通的启发'}
-                </Text>
-              </View>
-              
+          <Card className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
+            {/* Card Header */}
+            <View className="px-4 py-3 border-b border-neutral-800 flex items-center gap-2">
+              <Sparkles size={16} color="#10a37f" />
+              <Text className="text-white font-medium">
+                {detail.category === 'policy' ? '对八维通的影响' : '对八维通的启发'}
+              </Text>
+            </View>
+            
+            {analysisLoading ? (
+              <CardContent className="pt-4">
+                <View className="flex items-center justify-center py-8">
+                  <Text className="text-neutral-500 text-sm">AI 正在分析中...</Text>
+                </View>
+              </CardContent>
+            ) : bawitonAnalysis ? (
               <CardContent className="pt-4">
                 {/* Key Points */}
                 <View className="mb-4">
@@ -277,19 +325,14 @@ const DetailPage: FC = () => {
                   <Text className="text-neutral-400 text-sm leading-relaxed">{bawitonAnalysis.recommendation}</Text>
                 </View>
               </CardContent>
-            </Card>
-          ) : (
-            <Button
-              className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-xl h-12"
-              onClick={fetchBawitonAnalysis}
-              disabled={analysisLoading}
-            >
-              <View className="flex items-center gap-2">
-                <Sparkles size={18} color={analysisLoading ? '#525252' : '#10a37f'} />
-                <Text className="font-medium">{analysisLoading ? '分析中...' : '获取八维通洞察'}</Text>
-              </View>
-            </Button>
-          )}
+            ) : (
+              <CardContent className="pt-4">
+                <View className="flex items-center justify-center py-8">
+                  <Text className="text-neutral-500 text-sm">暂无洞察分析</Text>
+                </View>
+              </CardContent>
+            )}
+          </Card>
         </View>
 
         {/* Related News */}

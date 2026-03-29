@@ -6,6 +6,73 @@ import { SearchClient, Config, LLMClient } from 'coze-coding-dev-sdk';
 export class NewsController {
   constructor(private readonly newsService: NewsService) {}
 
+  @Get('stats')
+  async getStats() {
+    console.log('[GET /api/news/stats]');
+    
+    const searchClient = new SearchClient(new Config());
+    
+    // 获取不同分类的资讯数量
+    const categories = ['policy', 'industry', 'technology', 'market'];
+    const categoryCounts: Record<string, number> = {};
+    
+    for (const cat of categories) {
+      const keywords = {
+        policy: '具身智能 政策 法规 2025',
+        industry: '具身智能 行业 企业 2025',
+        technology: '具身智能 技术 研发 2025',
+        market: '具身智能 市场 投资 2025'
+      };
+      
+      const result = await searchClient.webSearch(keywords[cat], 10);
+      categoryCounts[cat] = (result.web_items || []).length;
+    }
+    
+    // 获取热门话题
+    const hotResult = await searchClient.webSearch('具身智能 2025 最新', 20);
+    const topics: Record<string, number> = {};
+    
+    (hotResult.web_items || []).forEach(item => {
+      const title = item.title || '';
+      // 提取关键词
+      const keywords = ['人形机器人', '具身智能', '空间计算', '多模态', '机器人', 'AI', '大模型', '智能制造', '自动驾驶'];
+      keywords.forEach(kw => {
+        if (title.includes(kw)) {
+          topics[kw] = (topics[kw] || 0) + 1;
+        }
+      });
+    });
+    
+    const hotTopics = Object.entries(topics)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([topic, count]) => ({ topic, count }));
+    
+    // 生成趋势数据（模拟最近7天）
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const weeklyTrend = weekDays.map((day, idx) => ({
+      day,
+      count: Math.floor(Math.random() * 30) + 20
+    }));
+    
+    // 计算总数和百分比
+    const total = Object.values(categoryCounts).reduce((a: number, b: number) => a + b, 0);
+    const categoryStats = categories.map(cat => ({
+      category: { policy: '政策', industry: '行业', technology: '技术', market: '市场' }[cat],
+      count: categoryCounts[cat],
+      percentage: total > 0 ? Math.round((categoryCounts[cat] as number / total) * 100) : 0
+    }));
+    
+    return {
+      totalNews: total,
+      hotTopics,
+      categoryStats,
+      weeklyTrend
+    };
+  }
+
   @Get('list')
   async getNewsList(
     @Query('page') page: string = '1',
