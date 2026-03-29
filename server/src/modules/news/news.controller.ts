@@ -137,11 +137,17 @@ export class NewsController {
         // 优化摘要
         const summary = this.cleanSummary(item.snippet || '');
         
+        // 清理标题：去除特殊字符和箭头等
+        const title = this.cleanTitle(item.title || '');
+        
+        // 截断来源名称，最多显示10个字
+        const source = this.truncateSource(item.site_name || '行业资讯', 10);
+        
         return {
           id: `news-${Date.now()}-${idx}`,
-          title: item.title,
+          title,
           summary,
-          source: item.site_name || '行业资讯',
+          source,
           publishTime: publishDate.toISOString().split('T')[0],
           publishTimestamp: publishDate.getTime(),
           category: category || this.detectCategory(item.title + ' ' + item.snippet),
@@ -253,6 +259,35 @@ export class NewsController {
     cleaned = cleaned.replace(/^[a-z]+\s+/, '');
     
     return cleaned.length < 10 ? summary : cleaned;
+  }
+
+  // 清理标题：去除特殊字符、箭头等
+  private cleanTitle(title: string): string {
+    if (!title) return '';
+    
+    // 去除常见的特殊字符和符号
+    let cleaned = title
+      .replace(/[→←↑↓↔↕↖↗↘↙]/g, '') // 去除箭头
+      .replace(/[│┃┄┅┆┇┈┉┊┋]/g, '') // 去除竖线
+      .replace(/[【】\[\]]/g, '') // 去除中括号
+      .replace(/[…]{2,}/g, '') // 去除省略号
+      .replace(/\s+/g, ' ') // 合并多余空格
+      .trim();
+    
+    // 如果清理后为空，返回原标题
+    return cleaned || title;
+  }
+
+  // 截断来源名称
+  private truncateSource(source: string, maxLen: number): string {
+    if (!source) return '行业资讯';
+    
+    // 如果来源太长，截断并添加省略号
+    if (source.length > maxLen) {
+      return source.slice(0, maxLen) + '...';
+    }
+    
+    return source;
   }
 
   // 根据内容自动检测分类

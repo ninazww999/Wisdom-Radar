@@ -199,30 +199,32 @@ const IndexPage: FC = () => {
       <CardContent className="py-4 px-4">
         {/* 标题 */}
         <Text className="text-white font-medium text-base mb-2 leading-relaxed block">
-          【{news.title}】{news.publishTime}
+          {news.title}
         </Text>
         
-        {/* 内容摘要 */}
-        <Text className="text-neutral-400 text-sm mb-3 leading-relaxed block">
-          • 内容：{news.summary.slice(0, 100)}...
-        </Text>
-        
-        {/* 八维通洞察 */}
-        {showInsight && (
-          <View className="bg-neutral-800 bg-opacity-50 rounded-lg p-3 mb-2">
-            <Text className="text-neutral-300 text-sm leading-relaxed">
-              • 八维通洞察：{news.bawitonInsight || '点击查看详细分析'}
-            </Text>
-          </View>
-        )}
-        
-        {/* 分类标签 */}
-        <View className="flex items-center gap-2">
+        {/* 元信息 */}
+        <View className="flex items-center gap-2 mb-3">
           <Badge className="bg-neutral-800 text-neutral-300 text-xs px-2 py-1 rounded border-0">
             {categoryLabels[news.category]}
           </Badge>
           <Text className="text-neutral-600 text-xs">{news.source}</Text>
+          <Text className="text-neutral-700 text-xs">·</Text>
+          <Text className="text-neutral-600 text-xs">{formatDate(news.publishTime)}</Text>
         </View>
+        
+        {/* 内容摘要 */}
+        <Text className="text-neutral-400 text-sm leading-relaxed block">
+          {news.summary.slice(0, 80)}...
+        </Text>
+        
+        {/* 八维通洞察 */}
+        {showInsight && (
+          <View className="bg-neutral-800 bg-opacity-50 rounded-lg p-3 mt-3">
+            <Text className="text-neutral-300 text-sm leading-relaxed">
+              💡 {news.bawitonInsight || '点击查看八维通洞察分析'}
+            </Text>
+          </View>
+        )}
       </CardContent>
     </Card>
   )
