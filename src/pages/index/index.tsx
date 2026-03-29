@@ -1,6 +1,6 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useLoad, usePullDownRefresh, useReachBottom, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
-import { useState } from 'react'
+import Taro, { useLoad, useDidShow, usePullDownRefresh, useReachBottom, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import { useState, useRef } from 'react'
 import type { FC } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -63,10 +63,28 @@ const IndexPage: FC = () => {
   const [page, setPage] = useState(1)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [dailyQuote] = useState(getDailyQuote)
+  
+  // 记录上次刷新时间，避免频繁刷新
+  const lastRefreshTimeRef = useRef<number>(0)
 
   useLoad(() => {
     console.log('Index page loaded.')
-    fetchNews()
+  })
+
+  // 每次页面显示时自动刷新资讯
+  useDidShow(() => {
+    const now = Date.now()
+    const timeSinceLastRefresh = now - lastRefreshTimeRef.current
+    
+    // 如果距离上次刷新超过 30 秒，才重新获取数据
+    // 这样可以避免从详情页返回时立即刷新，但又确保每次打开小程序都能获取最新资讯
+    if (timeSinceLastRefresh > 30000 || lastRefreshTimeRef.current === 0) {
+      console.log('[useDidShow] Refreshing news data...')
+      fetchNews()
+      lastRefreshTimeRef.current = now
+    } else {
+      console.log('[useDidShow] Skip refresh, last refresh was', Math.floor(timeSinceLastRefresh / 1000), 'seconds ago')
+    }
   })
 
   // 分享给朋友
@@ -100,6 +118,8 @@ const IndexPage: FC = () => {
         setLoading(true)
       }
       
+      console.log('[Fetch News] Fetching latest news, page:', pageNum, 'category:', category)
+      
       const response = await Network.request({
         url: '/api/news/list',
         method: 'GET',
@@ -110,12 +130,14 @@ const IndexPage: FC = () => {
         }
       })
       
-      console.log('Fetch news response:', response)
+      console.log('[Fetch News] Response:', response)
       
       if (response.data) {
         const data = response.data as NewsResponse
         if (pageNum === 1) {
           setNewsList(data.list)
+          // 更新刷新时间
+          lastRefreshTimeRef.current = Date.now()
         } else {
           setNewsList(prev => [...prev, ...data.list])
         }
@@ -123,7 +145,7 @@ const IndexPage: FC = () => {
         setPage(pageNum)
       }
     } catch (error) {
-      console.error('Fetch news error:', error)
+      console.error('[Fetch News] Error:', error)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -132,6 +154,7 @@ const IndexPage: FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true)
+    lastRefreshTimeRef.current = Date.now()
     await fetchNews(1, activeCategory || undefined)
   }
 
