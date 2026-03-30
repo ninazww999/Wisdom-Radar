@@ -49,6 +49,7 @@ const IndexPage: FC = () => {
   const [dailyQuote] = useState(getDailyQuote)
   
   const lastRefreshDateRef = useRef<string>('')
+  const hasDataRef = useRef(false)  // 追踪是否已有数据
 
   useLoad(() => {
     console.log('Index page loaded.')
@@ -63,13 +64,18 @@ const IndexPage: FC = () => {
   }
 
   useDidShow(() => {
+    // 每次显示页面时检查是否需要刷新数据
     const today = getTodayDateStr()
-    if (lastRefreshDateRef.current !== today) {
-      console.log('[useDidShow] New day detected, refreshing news...', today)
+    
+    // 如果是新的一天，或者没有数据，则刷新
+    if (lastRefreshDateRef.current !== today || !hasDataRef.current) {
+      console.log('[useDidShow] Refreshing news...', { today, hasData: hasDataRef.current, lastRefresh: lastRefreshDateRef.current })
       fetchNews()
       lastRefreshDateRef.current = today
     } else {
-      console.log('[useDidShow] Already refreshed today:', today)
+      console.log('[useDidShow] Data exists, skip refresh')
+      // 确保不显示 loading 状态
+      setLoading(false)
     }
   })
 
@@ -102,12 +108,23 @@ const IndexPage: FC = () => {
       
       console.log('[Fetch News] Response:', response)
       
-      if (response.data) {
-        setNewsData(response.data as NewsResponse)
+      // 确保数据格式正确
+      const data = response.data as NewsResponse
+      if (data && (data.hot?.length > 0 || data.policy?.length > 0 || data.market?.length > 0)) {
+        setNewsData({
+          hot: data.hot || [],
+          policy: data.policy || [],
+          market: data.market || []
+        })
+        hasDataRef.current = true  // 标记已有数据
         lastRefreshDateRef.current = getTodayDateStr()
+      } else {
+        console.warn('[Fetch News] No data in response:', response)
+        // 保持原有数据，不清空
       }
     } catch (error) {
       console.error('[Fetch News] Error:', error)
+      // 出错时保持原有数据，不清空
     } finally {
       setLoading(false)
       setRefreshing(false)
