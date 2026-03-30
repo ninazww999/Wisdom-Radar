@@ -4,12 +4,25 @@ import * as express from 'express';
 import { HttpStatusInterceptor } from '@/interceptors/http-status.interceptor';
 
 function getPort(): number {
-  // Railway 会设置 PORT 环境变量
-  const envPort = process.env.PORT;
-  if (envPort) {
-    const port = parseInt(envPort, 10);
+  // 后端专用端口环境变量（优先级最高）
+  const serverPort = process.env.SERVER_PORT;
+  if (serverPort) {
+    const port = parseInt(serverPort, 10);
     if (!isNaN(port) && port > 0 && port < 65536) {
       return port;
+    }
+  }
+  
+  // Railway 会设置 PORT 环境变量（生产环境）
+  // 但在开发环境中，PORT 被设置为前端端口，所以需要区分
+  const isDev = process.env.NODE_ENV !== 'production';
+  if (!isDev) {
+    const envPort = process.env.PORT;
+    if (envPort) {
+      const port = parseInt(envPort, 10);
+      if (!isNaN(port) && port > 0 && port < 65536) {
+        return port;
+      }
     }
   }
   
