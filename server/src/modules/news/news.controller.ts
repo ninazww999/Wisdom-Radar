@@ -21,6 +21,30 @@ interface NewsItem {
 const CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存
 let newsCache: { data: any; timestamp: number } | null = null;
 
+// 全局去重集合（跨维度）
+const globalSeenTitles = new Set<string>();
+
+// 标题相似度检查（判断两条资讯是否为同一内容）
+const isSimilarTitle = (title1: string, title2: string): boolean => {
+  const t1 = title1.toLowerCase().replace(/[^\u4e00-\u9fa5a-z0-9]/g, '');
+  const t2 = title2.toLowerCase().replace(/[^\u4e00-\u9fa5a-z0-9]/g, '');
+  
+  // 完全相同
+  if (t1 === t2) return true;
+  
+  // 一个是另一个的子串
+  if (t1.includes(t2) || t2.includes(t1)) return true;
+  
+  // 计算相似度（Jaccard相似度）
+  const chars1 = new Set(t1.split(''));
+  const chars2 = new Set(t2.split(''));
+  const intersection = new Set([...chars1].filter(x => chars2.has(x)));
+  const union = new Set([...chars1, ...chars2]);
+  const similarity = intersection.size / union.size;
+  
+  return similarity > 0.7; // 70%以上相似度视为重复
+};
+
 @Controller('news')
 export class NewsController {
   constructor(private readonly newsService: NewsService) {}
@@ -38,22 +62,25 @@ export class NewsController {
     const searchClient = new SearchClient(new Config());
     const llmClient = new LLMClient(new Config());
     
-    // 三个维度的搜索关键词 - 聚焦最新资讯，不限制年份
+    // 清空全局去重集合
+    globalSeenTitles.clear();
+    
+    // 三个维度的搜索关键词 - 严格区分，避免重复
     const searchQueries = {
       hot: [
-        '具身智能 人形机器人 最新',
-        '空间智能 人工智能 最新进展',
-        '智能机器人 新产品 新技术',
+        '人形机器人 新产品发布 新技术突破',
+        '具身智能 技术创新 最新成果',
+        '智能机器人 产业突破 技术进展',
       ],
       policy: [
-        '具身智能 机器人 最新政策',
-        '人形机器人 产业规划 最新',
-        '人工智能 空间计算 政策动态',
+        '人形机器人 国家政策 产业政策',
+        '具身智能 政府文件 规划纲要',
+        '人工智能 政策扶持 补贴政策',
       ],
       market: [
-        '具身智能 机器人 融资 最新',
-        '人形机器人 商业化 最新动态',
-        '空间智能 市场 应用 最新',
+        '人形机器人 融资 投资 并购',
+        '具身智能 商业化落地 应用场景',
+        '智能机器人 市场规模 产业报告',
       ],
     };
     
@@ -66,10 +93,10 @@ export class NewsController {
     
     console.log(`[Search Results] Hot: ${hotResults.length}, Policy: ${policyResults.length}, Market: ${marketResults.length}`);
     
-    // 为每个维度生成分析（每个维度取前3条）
-    const hotNews = await this.generateAnalysis(llmClient, hotResults.slice(0, 3), 'hot');
-    const policyNews = await this.generateAnalysis(llmClient, policyResults.slice(0, 3), 'policy');
-    const marketNews = await this.generateAnalysis(llmClient, marketResults.slice(0, 3), 'market');
+    // 为每个维度生成分析（每个维度取前5条）
+    const hotNews = await this.generateAnalysis(llmClient, hotResults.slice(0, 5), 'hot');
+    const policyNews = await this.generateAnalysis(llmClient, policyResults.slice(0, 5), 'policy');
+    const marketNews = await this.generateAnalysis(llmClient, marketResults.slice(0, 5), 'market');
     
     const result = {
       hot: hotNews,
@@ -100,16 +127,20 @@ export class NewsController {
     const results = await Promise.all(searchPromises);
     const allItems = results.flatMap(r => r.web_items || []);
     
-    // 计算7天前的时间戳
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    
-    // 去重并过滤
-    const seenTitles = new Set<string>();
+    // 使用全局去重集合和相似度检查
     const uniqueItems = allItems.filter(item => {
       if (!item.title) return false;
-      const normalized = item.title.trim().toLowerCase();
-      if (seenTitles.has(normalized)) return false;
-      seenTitles.add(normalized);
+      const title = item.title.trim();
+      
+      // 检查是否与已存在的标题相似
+      for (const seenTitle of globalSeenTitles) {
+        if (isSimilarTitle(title, seenTitle)) {
+          return false; // 重复，过滤掉
+        }
+      }
+      
+      // 添加到全局集合
+      globalSeenTitles.add(title);
       return true;
     });
     
