@@ -3,7 +3,7 @@ import Taro, { useLoad, useDidShow, usePullDownRefresh, useShareAppMessage, useS
 import { useState, useRef } from 'react'
 import type { FC } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, TrendingUp, Globe, Briefcase, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react-taro'
+import { RefreshCw, TrendingUp, Globe, Briefcase } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
 
@@ -126,21 +126,6 @@ const IndexPage: FC = () => {
     })
   }
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    
-    if (hours < 1) return '刚刚'
-    if (hours < 24) return `${hours}小时前`
-    
-    const days = Math.floor(hours / 24)
-    if (days < 7) return `${days}天前`
-    
-    return dateStr
-  }
-
   const getTodayDate = () => {
     const now = new Date()
     const year = now.getFullYear()
@@ -149,167 +134,63 @@ const IndexPage: FC = () => {
     return `${year}年${month}月${date}日`
   }
 
-  // 影响图标
-  const getImpactIcon = (impact?: string) => {
-    if (impact === 'positive') return <ArrowUpRight size={14} color="#10b981" />
-    if (impact === 'negative') return <ArrowDownRight size={14} color="#ef4444" />
-    return <Minus size={14} color="#6b7280" />
-  }
-
-  // 影响文字
-  const getImpactText = (impact?: string) => {
-    if (impact === 'positive') return '战略利好'
-    if (impact === 'negative') return '战略风险'
-    return '战略中性'
-  }
-
-  // 渲染热点资讯卡片
-  const renderHotCard = (news: NewsItem) => (
-    <View 
-      key={news.id} 
-      className="mb-4 bg-neutral-900 rounded-xl p-4 border border-neutral-800"
-      onClick={() => handleNewsClick(news)}
-    >
-      {/* 标题 */}
-      <Text className="text-white font-medium text-base leading-relaxed block mb-2">
-        {news.title}
-      </Text>
-      
-      {/* 来源和时间 */}
-      <View className="flex items-center gap-2 mb-3">
-        <Text className="text-neutral-500 text-xs">{news.source}</Text>
-        <Text className="text-neutral-700 text-xs">·</Text>
-        <Text className="text-neutral-500 text-xs">{formatTime(news.publishTime)}</Text>
-      </View>
-      
-      {/* 核心内容 */}
-      {news.coreContent && (
-        <View className="mb-3">
-          <Text className="text-neutral-400 text-xs mb-1">核心内容</Text>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.coreContent}
-          </Text>
-        </View>
-      )}
-      
-      {/* 战略启示 */}
-      {news.bawitonAnalysis && (
-        <View className="bg-emerald-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-emerald-500">
-          <Text className="text-emerald-400 text-xs font-medium mb-1">💡 战略启示</Text>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.bawitonAnalysis}
-          </Text>
-        </View>
-      )}
-    </View>
-  )
-
-  // 渲染政策卡片
-  const renderPolicyCard = (news: NewsItem) => (
-    <View 
-      key={news.id} 
-      className="mb-4 bg-neutral-900 rounded-xl p-4 border border-neutral-800"
-      onClick={() => handleNewsClick(news)}
-    >
-      {/* 标题 */}
-      <Text className="text-white font-medium text-base leading-relaxed block mb-2">
-        {news.title}
-      </Text>
-      
-      {/* 来源和时间 */}
-      <View className="flex items-center gap-2 mb-3">
-        <Text className="text-neutral-500 text-xs">{news.source}</Text>
-        <Text className="text-neutral-700 text-xs">·</Text>
-        <Text className="text-neutral-500 text-xs">{formatTime(news.publishTime)}</Text>
-      </View>
-      
-      {/* 核心内容 */}
-      {news.coreContent && (
-        <View className="mb-3">
-          <Text className="text-neutral-400 text-xs mb-1">核心内容</Text>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.coreContent}
-          </Text>
-        </View>
-      )}
-      
-      {/* 战略影响 */}
-      {news.bawitonAnalysis && (
-        <View className="bg-blue-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-blue-500">
-          <View className="flex items-center gap-1 mb-1">
-            {getImpactIcon(news.impact)}
-            <Text className="text-blue-400 text-xs font-medium">{getImpactText(news.impact)}</Text>
+  // 渲染资讯卡片 - 统一样式
+  const renderNewsCard = (news: NewsItem, section: 'hot' | 'policy' | 'market') => {
+    const impactEmoji = news.impact === 'positive' ? '↗️' : news.impact === 'negative' ? '↘️' : '➖'
+    
+    return (
+      <View 
+        key={news.id} 
+        className="mb-3 bg-neutral-900 rounded-lg p-4"
+        onClick={() => handleNewsClick(news)}
+      >
+        {/* 标题行 */}
+        <Text className="text-white font-bold text-base leading-relaxed block">
+          【{news.title}】
+        </Text>
+        <Text className="text-neutral-600 text-xs block mt-1 mb-3">
+          {news.publishTime} · {news.source}
+        </Text>
+        
+        {/* 核心内容 */}
+        {news.coreContent && (
+          <View className="mb-3">
+            <Text className="text-neutral-300 text-sm leading-relaxed">
+              ·内容：{news.coreContent}
+            </Text>
           </View>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.bawitonAnalysis}
-          </Text>
-        </View>
-      )}
-    </View>
-  )
-
-  // 渲染市场卡片
-  const renderMarketCard = (news: NewsItem) => (
-    <View 
-      key={news.id} 
-      className="mb-4 bg-neutral-900 rounded-xl p-4 border border-neutral-800"
-      onClick={() => handleNewsClick(news)}
-    >
-      {/* 标题 */}
-      <Text className="text-white font-medium text-base leading-relaxed block mb-2">
-        {news.title}
-      </Text>
-      
-      {/* 来源和时间 */}
-      <View className="flex items-center gap-2 mb-3">
-        <Text className="text-neutral-500 text-xs">{news.source}</Text>
-        <Text className="text-neutral-700 text-xs">·</Text>
-        <Text className="text-neutral-500 text-xs">{formatTime(news.publishTime)}</Text>
-      </View>
-      
-      {/* 核心内容 */}
-      {news.coreContent && (
-        <View className="mb-3">
-          <Text className="text-neutral-400 text-xs mb-1">核心内容</Text>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.coreContent}
-          </Text>
-        </View>
-      )}
-      
-      {/* 战略影响 */}
-      {news.bawitonAnalysis && (
-        <View className="bg-purple-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-purple-500 mb-3">
-          <View className="flex items-center gap-1 mb-1">
-            {getImpactIcon(news.impact)}
-            <Text className="text-purple-400 text-xs font-medium">{getImpactText(news.impact)}</Text>
+        )}
+        
+        {/* 行业启示 / 战略影响 */}
+        {news.bawitonAnalysis && (
+          <View className="mb-2">
+            <Text className="text-neutral-300 text-sm leading-relaxed">
+              {section === 'hot' ? '·行业启示：' : `${impactEmoji} 影响：`}{news.bawitonAnalysis}
+            </Text>
           </View>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.bawitonAnalysis}
-          </Text>
-        </View>
-      )}
-      
-      {/* 战略建议 */}
-      {news.recommendation && (
-        <View className="bg-amber-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-amber-500">
-          <Text className="text-amber-400 text-xs font-medium mb-1">📌 战略建议</Text>
-          <Text className="text-neutral-300 text-sm leading-relaxed">
-            {news.recommendation}
-          </Text>
-        </View>
-      )}
-    </View>
-  )
+        )}
+        
+        {/* 行动建议 */}
+        {news.recommendation && (
+          <View className="mt-2 bg-neutral-800 bg-opacity-50 rounded px-3 py-2">
+            <Text className="text-amber-400 text-xs font-medium">📌 建议：</Text>
+            <Text className="text-neutral-300 text-sm leading-relaxed">
+              {news.recommendation}
+            </Text>
+          </View>
+        )}
+      </View>
+    )
+  }
 
   // 渲染分组标题
   const renderSectionHeader = (title: string, subtitle: string, icon: React.ReactNode) => (
-    <View className="flex items-center gap-3 mb-4 px-4">
-      <View className="w-10 h-10 rounded-xl bg-neutral-800 flex items-center justify-center">
+    <View className="flex items-center gap-3 mb-3 px-4">
+      <View className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center">
         {icon}
       </View>
       <View>
-        <Text className="text-white font-bold text-lg">{title}</Text>
+        <Text className="text-white font-bold text-base">{title}</Text>
         <Text className="text-neutral-500 text-xs">{subtitle}</Text>
       </View>
     </View>
@@ -318,12 +199,11 @@ const IndexPage: FC = () => {
   // 加载骨架屏
   const renderSkeleton = () => (
     <View>
-      {/* 热点骨架屏 */}
-      <View className="mb-6">
-        {renderSectionHeader('每日热点', '最新突破与核心动态', <TrendingUp size={20} color="#10b981" />)}
-        <View className="px-4">
+      {[1, 2, 3].map((section) => (
+        <View key={section} className="mb-5 px-4">
+          <Skeleton className="h-6 w-32 mb-3 bg-neutral-800" />
           {[1, 2, 3].map((i) => (
-            <View key={i} className="mb-4 bg-neutral-900 rounded-xl p-4 border border-neutral-800">
+            <View key={i} className="mb-3 bg-neutral-900 rounded-lg p-4">
               <Skeleton className="h-4 w-full mb-2 bg-neutral-800" />
               <Skeleton className="h-3 w-24 mb-3 bg-neutral-800" />
               <Skeleton className="h-3 w-full mb-2 bg-neutral-800" />
@@ -331,7 +211,7 @@ const IndexPage: FC = () => {
             </View>
           ))}
         </View>
-      </View>
+      ))}
     </View>
   )
 
@@ -385,30 +265,30 @@ const IndexPage: FC = () => {
         <View className="pt-4">
           {/* 每日热点资讯 */}
           {newsData.hot.length > 0 && (
-            <View className="mb-6">
-              {renderSectionHeader('每日热点', '技术突破与战略启示', <TrendingUp size={20} color="#10b981" />)}
+            <View className="mb-5">
+              {renderSectionHeader('每日热点', '技术突破与行业启示', <TrendingUp size={18} color="#10b981" />)}
               <View className="px-4">
-                {newsData.hot.map((item) => renderHotCard(item))}
+                {newsData.hot.map((item) => renderNewsCard(item, 'hot'))}
               </View>
             </View>
           )}
 
           {/* 宏观风向 */}
           {newsData.policy.length > 0 && (
-            <View className="mb-6">
-              {renderSectionHeader('宏观风向', '政策解读与战略影响', <Globe size={20} color="#3b82f6" />)}
+            <View className="mb-5">
+              {renderSectionHeader('宏观风向', '政策解读与战略影响', <Globe size={18} color="#3b82f6" />)}
               <View className="px-4">
-                {newsData.policy.map((item) => renderPolicyCard(item))}
+                {newsData.policy.map((item) => renderNewsCard(item, 'policy'))}
               </View>
             </View>
           )}
 
           {/* 市场微观 */}
           {newsData.market.length > 0 && (
-            <View className="mb-6">
-              {renderSectionHeader('市场微观', '市场动态与战略建议', <Briefcase size={20} color="#a855f7" />)}
+            <View className="mb-5">
+              {renderSectionHeader('市场微观', '市场动态与行动建议', <Briefcase size={18} color="#a855f7" />)}
               <View className="px-4">
-                {newsData.market.map((item) => renderMarketCard(item))}
+                {newsData.market.map((item) => renderNewsCard(item, 'market'))}
               </View>
             </View>
           )}
