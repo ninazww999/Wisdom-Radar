@@ -319,14 +319,14 @@ export class NewsController {
         const realContent = searchResult.web_items?.[0]?.snippet || '';
         
         const systemPrompt = `你是一位专业的具身智能和空间智能领域分析师。
-请根据资讯标题和搜索到的实时信息，生成详细的内容解读（200-300字）。
+请根据资讯标题和搜索到的原文信息，生成内容总结（150-200字）。
 
 输出要求：
-1. 直接输出内容，不要添加任何标题或前缀
-2. 包含背景、主要内容和行业影响分析
-3. 专业、客观，不要使用Markdown格式
+1. 直接输出总结内容，不要添加任何标题或前缀
+2. 简明扼要地概括原文核心内容
+3. 客观准确，不要使用Markdown格式
 4. 不要包含标题、来源、时间、作者等元信息
-5. 重点关注与空间智能、数字孪生、智慧城市等相关的内容`;
+5. 重点关注与具身智能、空间智能、数字孪生、智慧城市相关的内容`;
         
         const response = await llmClient.invoke([
           { role: 'system', content: systemPrompt },

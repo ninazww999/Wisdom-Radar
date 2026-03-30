@@ -362,8 +362,15 @@ const DetailPage: FC = () => {
         {/* Content */}
         {detail.content && (
           <View className="mb-6">
-            <Text className="text-neutral-300 text-sm font-medium mb-3 block">原文内容</Text>
-            <Text className="text-neutral-400 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
+            <View className="flex items-center gap-2 mb-3">
+              <View className="w-5 h-5 rounded bg-emerald-500 bg-opacity-20 flex items-center justify-center">
+                <Sparkles size={12} color="#10b981" />
+              </View>
+              <Text className="text-emerald-400 text-sm font-medium">AI 内容总结</Text>
+            </View>
+            <View className="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
+              <Text className="text-neutral-300 text-base leading-relaxed whitespace-pre-wrap">{detail.content}</Text>
+            </View>
           </View>
         )}
 
