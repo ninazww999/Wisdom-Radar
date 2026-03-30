@@ -1,7 +1,27 @@
-[build]
-builder = "docker"
+# Railway Nixpacks 配置 - 构建前后端
+
+[nixpacks]
+build_plan = """
+[phases.setup]
+nixPkgs = ['nodejs_20', 'pnpm']
+
+[phases.install]
+cmds = ['npm install -g pnpm@9', 'pnpm install --frozen-lockfile']
+
+[phases.build]
+cmds = [
+  'echo "Building server..."',
+  'cd server && pnpm build',
+  'echo "Building web..."',
+  'cd .. && pnpm build:web',
+  'echo "Verifying..."',
+  'ls -la dist-web/',
+  'ls -la server/dist/'
+]
+"""
 
 [deploy]
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
+startCommand = "node server/dist/main.js"
