@@ -703,7 +703,7 @@ const IndexPage: FC = () => {
           {/* 市场微观 */}
           {newsData.market.length > 0 && (
             <View className="mb-5">
-              {renderSectionHeader('市场微观', '市场动态与行动建议', <Briefcase size={18} color="#a855f7" />)}
+              {renderSectionHeader('市场微观', '头部企业市场资讯', <Briefcase size={18} color="#a855f7" />)}
               <View className="px-4">
                 {newsData.market.map((item) => renderNewsCard(item, 'market'))}
               </View>
