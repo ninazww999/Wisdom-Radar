@@ -157,8 +157,8 @@ const IndexPage: FC = () => {
         {/* 内容模块 */}
         {news.coreContent && (
           <View className="px-4 py-3 border-t border-neutral-800">
-            <Text className="text-neutral-500 text-xs mb-2">内容</Text>
-            <Text className="text-neutral-200 text-sm leading-relaxed">
+            <Text className="block text-neutral-500 text-xs mb-2">内容</Text>
+            <Text className="block text-neutral-200 text-sm leading-relaxed">
               {news.coreContent}
             </Text>
           </View>
@@ -167,8 +167,8 @@ const IndexPage: FC = () => {
         {/* 行业启示模块 */}
         {news.bawitonAnalysis && (
           <View className={`px-4 py-3 border-t border-neutral-800 border-l-2 ${sectionColor}`}>
-            <Text className="text-neutral-500 text-xs mb-2">行业启示</Text>
-            <Text className="text-neutral-100 text-sm leading-relaxed">
+            <Text className="block text-neutral-500 text-xs mb-2">行业启示</Text>
+            <Text className="block text-neutral-100 text-sm leading-relaxed">
               {news.bawitonAnalysis}
             </Text>
           </View>
@@ -177,8 +177,8 @@ const IndexPage: FC = () => {
         {/* 行动建议模块 */}
         {news.recommendation && (
           <View className="px-4 py-3 border-t border-neutral-800">
-            <Text className="text-amber-400 text-xs mb-2">📌 建议行动</Text>
-            <Text className="text-neutral-200 text-sm leading-relaxed">
+            <Text className="block text-amber-400 text-xs mb-2">📌 建议行动</Text>
+            <Text className="block text-neutral-200 text-sm leading-relaxed">
               {news.recommendation}
             </Text>
           </View>
