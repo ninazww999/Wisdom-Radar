@@ -158,9 +158,9 @@ const IndexPage: FC = () => {
 
   // 影响文字
   const getImpactText = (impact?: string) => {
-    if (impact === 'positive') return '正面影响'
-    if (impact === 'negative') return '负面影响'
-    return '中性影响'
+    if (impact === 'positive') return '战略利好'
+    if (impact === 'negative') return '战略风险'
+    return '战略中性'
   }
 
   // 渲染热点资讯卡片
@@ -192,10 +192,10 @@ const IndexPage: FC = () => {
         </View>
       )}
       
-      {/* 八维通启示 */}
+      {/* 战略启示 */}
       {news.bawitonAnalysis && (
         <View className="bg-emerald-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-emerald-500">
-          <Text className="text-emerald-400 text-xs font-medium mb-1">💡 八维通启示</Text>
+          <Text className="text-emerald-400 text-xs font-medium mb-1">💡 战略启示</Text>
           <Text className="text-neutral-300 text-sm leading-relaxed">
             {news.bawitonAnalysis}
           </Text>
@@ -233,7 +233,7 @@ const IndexPage: FC = () => {
         </View>
       )}
       
-      {/* 八维通影响 */}
+      {/* 战略影响 */}
       {news.bawitonAnalysis && (
         <View className="bg-blue-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-blue-500">
           <View className="flex items-center gap-1 mb-1">
@@ -277,7 +277,7 @@ const IndexPage: FC = () => {
         </View>
       )}
       
-      {/* 八维通影响 */}
+      {/* 战略影响 */}
       {news.bawitonAnalysis && (
         <View className="bg-purple-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-purple-500 mb-3">
           <View className="flex items-center gap-1 mb-1">
@@ -290,10 +290,10 @@ const IndexPage: FC = () => {
         </View>
       )}
       
-      {/* 决策建议 */}
+      {/* 战略建议 */}
       {news.recommendation && (
         <View className="bg-amber-900 bg-opacity-20 rounded-lg p-3 border-l-2 border-amber-500">
-          <Text className="text-amber-400 text-xs font-medium mb-1">📌 决策建议</Text>
+          <Text className="text-amber-400 text-xs font-medium mb-1">📌 战略建议</Text>
           <Text className="text-neutral-300 text-sm leading-relaxed">
             {news.recommendation}
           </Text>
@@ -363,7 +363,7 @@ const IndexPage: FC = () => {
         {/* 系统说明 */}
         <View className="bg-neutral-900 bg-opacity-50 rounded-lg p-3 mb-2">
           <Text className="text-neutral-400 text-xs leading-relaxed">
-            每日自动抓取具身智能与空间智能领域最新资讯，AI智能分析热点、政策、市场动态，为八维通提供决策参考。
+            每日自动抓取具身智能与空间智能领域最新资讯，AI智能分析热点、政策、市场动态，提供战略思考与决策参考。
           </Text>
         </View>
         
@@ -386,7 +386,7 @@ const IndexPage: FC = () => {
           {/* 每日热点资讯 */}
           {newsData.hot.length > 0 && (
             <View className="mb-6">
-              {renderSectionHeader('每日热点', '最新突破与核心动态', <TrendingUp size={20} color="#10b981" />)}
+              {renderSectionHeader('每日热点', '技术突破与战略启示', <TrendingUp size={20} color="#10b981" />)}
               <View className="px-4">
                 {newsData.hot.map((item) => renderHotCard(item))}
               </View>
@@ -396,7 +396,7 @@ const IndexPage: FC = () => {
           {/* 宏观风向 */}
           {newsData.policy.length > 0 && (
             <View className="mb-6">
-              {renderSectionHeader('宏观风向', '战略层政策解读', <Globe size={20} color="#3b82f6" />)}
+              {renderSectionHeader('宏观风向', '政策解读与战略影响', <Globe size={20} color="#3b82f6" />)}
               <View className="px-4">
                 {newsData.policy.map((item) => renderPolicyCard(item))}
               </View>
@@ -406,7 +406,7 @@ const IndexPage: FC = () => {
           {/* 市场微观 */}
           {newsData.market.length > 0 && (
             <View className="mb-6">
-              {renderSectionHeader('市场微观', '业务层动态与建议', <Briefcase size={20} color="#a855f7" />)}
+              {renderSectionHeader('市场微观', '市场动态与战略建议', <Briefcase size={20} color="#a855f7" />)}
               <View className="px-4">
                 {newsData.market.map((item) => renderMarketCard(item))}
               </View>

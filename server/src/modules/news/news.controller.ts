@@ -148,35 +148,44 @@ export class NewsController {
     section: 'hot' | 'policy' | 'market'
   ): Promise<Partial<NewsItem>> {
     const prompts = {
-      hot: `分析以下具身智能/空间智能热点资讯，输出JSON格式：
+      hot: `你是八维通科技有限公司的首席战略官。八维通是卓越的空间智能服务商，核心业务包括城市数据资产底座、数字孪生、模拟仿真推演、智慧轨交（覆盖40+城市）。
+
+分析以下具身智能/空间智能热点资讯，从战略高度输出思考：
+
 标题：${news.title}
 摘要：${news.summary}
 
-输出格式：
+输出JSON格式：
 {
-  "coreContent": "核心内容提炼（30-50字）",
-  "bawitonAnalysis": "对八维通的启示（30-50字，结合空间智能、数字孪生、智慧轨交业务）"
+  "coreContent": "核心内容提炼（30-50字，说明事件本身）",
+  "bawitonAnalysis": "战略启示（40-60字，对空间智能和具身智能下一步战略方向的深度思考，包括技术路线、市场机会、竞争态势等）"
 }`,
-      policy: `分析以下具身智能/空间智能政策资讯，输出JSON格式：
+      policy: `你是八维通科技有限公司的首席战略官。八维通是卓越的空间智能服务商，核心业务包括城市数据资产底座、数字孪生、模拟仿真推演、智慧轨交（覆盖40+城市）。
+
+分析以下具身智能/空间智能政策资讯，从战略高度输出影响：
+
 标题：${news.title}
 摘要：${news.summary}
 
-输出格式：
+输出JSON格式：
 {
-  "coreContent": "核心内容提炼（30-50字）",
+  "coreContent": "核心内容提炼（30-50字，说明政策要点）",
   "impact": "positive/negative/neutral",
-  "bawitonAnalysis": "对八维通的影响分析（30-50字，说明正面/负面影响）"
+  "bawitonAnalysis": "战略影响（40-60字，对八维通战略方向的影响，包括政策红利、合规要求、行业格局变化等）"
 }`,
-      market: `分析以下具身智能/空间智能市场资讯，输出JSON格式：
+      market: `你是八维通科技有限公司的首席战略官。八维通是卓越的空间智能服务商，核心业务包括城市数据资产底座、数字孪生、模拟仿真推演、智慧轨交（覆盖40+城市）。
+
+分析以下具身智能/空间智能市场资讯，从战略高度输出建议：
+
 标题：${news.title}
 摘要：${news.summary}
 
-输出格式：
+输出JSON格式：
 {
-  "coreContent": "核心内容提炼（30-50字）",
+  "coreContent": "核心内容提炼（30-50字，说明市场动态）",
   "impact": "positive/negative/neutral",
-  "bawitonAnalysis": "对八维通的影响分析（30-50字）",
-  "recommendation": "决策建议（20-40字）"
+  "bawitonAnalysis": "战略影响（40-60字，对八维通市场战略的影响）",
+  "recommendation": "战略建议（30-50字，从技术布局、市场拓展、合作策略等维度给出具体建议）"
 }`,
     };
     
