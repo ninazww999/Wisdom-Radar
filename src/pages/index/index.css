@@ -1,1 +1,15 @@
 /* 优先使用 tailwindcss，如无必要请不要使用css */
+
+/* 加载动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

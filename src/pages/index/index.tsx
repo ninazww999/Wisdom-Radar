@@ -616,6 +616,14 @@ const IndexPage: FC = () => {
   // 加载骨架屏
   const renderSkeleton = () => (
     <View className="px-4">
+      {/* 加载提示 */}
+      <View className="flex items-center justify-center py-8 mb-4">
+        <View className="flex items-center gap-3">
+          <View className="w-5 h-5 border-2 border-neutral-600 border-t-emerald-500 rounded-full animate-spin" />
+          <Text className="text-neutral-500 text-sm">正在获取最新资讯...</Text>
+        </View>
+      </View>
+      
       {[1, 2, 3].map((section) => (
         <View key={section} className="mb-5">
           <View className="h-6 w-32 bg-neutral-800 rounded mb-3" />

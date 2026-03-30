@@ -17,6 +17,10 @@ interface NewsItem {
   recommendation?: string;
 }
 
+// 缓存配置
+const CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存
+let newsCache: { data: any; timestamp: number } | null = null;
+
 @Controller('news')
 export class NewsController {
   constructor(private readonly newsService: NewsService) {}
@@ -24,6 +28,12 @@ export class NewsController {
   @Get('list')
   async getNewsList() {
     console.log('[GET /api/news/list] Fetching news...');
+    
+    // 检查缓存
+    if (newsCache && Date.now() - newsCache.timestamp < CACHE_DURATION) {
+      console.log('[Cache] Returning cached data');
+      return newsCache.data;
+    }
     
     const searchClient = new SearchClient(new Config());
     const llmClient = new LLMClient(new Config());
@@ -61,11 +71,17 @@ export class NewsController {
     const policyNews = await this.generateAnalysis(llmClient, policyResults.slice(0, 3), 'policy');
     const marketNews = await this.generateAnalysis(llmClient, marketResults.slice(0, 3), 'market');
     
-    return {
+    const result = {
       hot: hotNews,
       policy: policyNews,
       market: marketNews,
     };
+    
+    // 保存到缓存
+    newsCache = { data: result, timestamp: Date.now() };
+    console.log('[Cache] Saved new data to cache');
+    
+    return result;
   }
   
   // 搜索并处理资讯
