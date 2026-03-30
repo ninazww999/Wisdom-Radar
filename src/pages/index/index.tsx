@@ -693,7 +693,7 @@ const IndexPage: FC = () => {
           {/* 宏观风向 */}
           {newsData.policy.length > 0 && (
             <View className="mb-5">
-              {renderSectionHeader('宏观风向', '政策解读与战略影响', <Globe size={18} color="#3b82f6" />)}
+              {renderSectionHeader('宏观风向', '国家和地方政策动态', <Globe size={18} color="#3b82f6" />)}
               <View className="px-4">
                 {newsData.policy.map((item) => renderNewsCard(item, 'policy'))}
               </View>
