@@ -226,7 +226,7 @@ const IndexPage: FC = () => {
       <View className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center">
         {icon}
       </View>
-      <View>
+      <View className="flex flex-col gap-1">
         <Text className="text-white font-bold text-base">{title}</Text>
         <Text className="text-neutral-500 text-xs">{subtitle}</Text>
       </View>
