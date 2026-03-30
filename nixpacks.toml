@@ -8,15 +8,16 @@ cmds = ['npm install -g pnpm@9', 'pnpm install --no-frozen-lockfile']
 
 [phases.build]
 cmds = [
-  'echo "Building server..."',
+  'echo "=== Building server ==="',
   'cd server && pnpm build',
-  'echo "Building web frontend..."',
+  'echo "=== Building web frontend ==="',
   'cd .. && pnpm build:web',
-  'echo "Listing dist-web contents:"',
-  'ls -la dist-web/ || echo "dist-web not found"',
-  'echo "Listing server dist contents:"',
+  'echo "=== Checking build outputs ==="',
+  'pwd',
+  'ls -la .',
+  'ls -la dist-web/ || echo "dist-web not found at root"',
   'ls -la server/dist/ || echo "server/dist not found"'
 ]
 
 [start]
-cmd = 'node server/dist/main.js'
+cmd = 'pwd && ls -la . && ls -la dist-web/ && node server/dist/main.js'
