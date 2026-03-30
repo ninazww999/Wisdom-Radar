@@ -32,10 +32,9 @@ const isSimilarTitle = (title1: string, title2: string): boolean => {
   // 完全相同
   if (t1 === t2) return true;
   
-  // 提取核心关键词（长度>2的词）
+  // 提取核心关键词（长度>=2的词）
   const extractKeywords = (text: string): Set<string> => {
     const keywords = new Set<string>();
-    // 提取连续的中文字符作为关键词
     const matches = text.match(/[\u4e00-\u9fa5]{2,}/g) || [];
     matches.forEach(m => keywords.add(m));
     return keywords;
@@ -48,26 +47,42 @@ const isSimilarTitle = (title1: string, title2: string): boolean => {
   const commonKeywords = [...keywords1].filter(k => keywords2.has(k));
   const maxKeywords = Math.max(keywords1.size, keywords2.size);
   
-  // 如果超过50%的关键词重叠，视为重复
-  if (maxKeywords > 0 && commonKeywords.length / maxKeywords > 0.5) {
+  if (maxKeywords > 0 && commonKeywords.length / maxKeywords >= 0.4) {
     return true;
   }
   
-  // 一个是另一个的子串
-  if (t1.length > 10 && t2.length > 10) {
-    if (t1.includes(t2.slice(0, -5)) || t2.includes(t1.slice(0, -5))) {
+  // 核心概念组合检查 - 两个标题包含相同的核心概念词组合
+  const conceptGroups = [
+    ['炫技', '实用'],
+    ['表演', '实用'],
+    ['融资', '亿元'],
+    ['量产', '下线'],
+    ['技术', '突破'],
+    ['政策', '支持'],
+    ['投资', '轮'],
+    ['告别', '实用'],
+    ['走向', '实用'],
+  ];
+  
+  for (const group of conceptGroups) {
+    const bothHave = group.every(word => t1.includes(word)) && group.every(word => t2.includes(word));
+    if (bothHave) {
       return true;
     }
   }
   
-  // 计算相似度（Jaccard相似度）
+  // Jaccard相似度检查
   const chars1 = new Set(t1.split(''));
   const chars2 = new Set(t2.split(''));
   const intersection = new Set([...chars1].filter(x => chars2.has(x)));
   const union = new Set([...chars1, ...chars2]);
   const similarity = intersection.size / union.size;
   
-  return similarity > 0.6; // 60%以上相似度视为重复
+  if (similarity > 0.5) {
+    return true;
+  }
+  
+  return false;
 };
 
 @Controller('news')
@@ -93,19 +108,19 @@ export class NewsController {
     // 三个维度的搜索关键词 - 覆盖具身智能和空间智能
     const searchQueries = {
       hot: [
-        '具身智能 最新',
-        '人形机器人 技术',
+        '具身智能 技术突破',
+        '人形机器人 新技术',
         '空间智能 应用',
       ],
       policy: [
-        '具身智能 政策',
-        '人形机器人 规划',
-        '空间智能 发展',
+        '人形机器人 政策 工信部',
+        '具身智能 国家规划',
+        '机器人 产业政策 地方',
       ],
       market: [
-        '人形机器人 融资',
+        '人形机器人 融资 亿元',
         '具身智能 投资',
-        '机器人 产业',
+        '机器人 企业 动态',
       ],
     };
     
