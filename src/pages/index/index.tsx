@@ -279,7 +279,7 @@ const IndexPage: FC = () => {
           WebkitBackdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
         }}
-        className="px-4 pt-10 pb-4 sticky top-0 z-10"
+        className="px-4 pt-10 pb-4"
       >
         <View className="flex items-center justify-between mb-3">
           <View className="flex flex-col gap-2">
