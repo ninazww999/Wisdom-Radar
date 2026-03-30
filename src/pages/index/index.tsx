@@ -265,9 +265,9 @@ const IndexPage: FC = () => {
         className="px-4 pt-10 pb-4 sticky top-0 z-10"
       >
         <View className="flex items-center justify-between mb-3">
-          <View>
+          <View className="flex flex-col gap-2">
             <Text className="text-white text-xl font-bold">智界雷达</Text>
-            <Text className="text-neutral-500 text-sm mt-2">{getTodayDate()}</Text>
+            <Text className="text-neutral-500 text-sm">{getTodayDate()}</Text>
           </View>
           <View 
             className="w-9 h-9 rounded-full bg-neutral-900 flex items-center justify-center"
