@@ -4,20 +4,24 @@ nixPkgs = ['nodejs_20', 'pnpm']
 aptPkgs = ['build-essential', 'python3']
 
 [phases.install]
-cmds = ['npm install -g pnpm@9', 'pnpm install --no-frozen-lockfile']
+cmds = [
+  'npm install -g pnpm@9', 
+  'pnpm install --no-frozen-lockfile'
+]
 
 [phases.build]
 cmds = [
-  'echo "=== Building server ==="',
-  'cd server && pnpm build',
-  'echo "=== Building web frontend ==="',
-  'cd .. && pnpm build:web',
-  'echo "=== Checking build outputs ==="',
+  'echo "=== Build Environment ==="',
   'pwd',
-  'ls -la .',
-  'ls -la dist-web/ || echo "dist-web not found at root"',
-  'ls -la server/dist/ || echo "server/dist not found"'
+  'ls -la',
+  'echo "=== Building server ==="',
+  'cd /app/server && pnpm build',
+  'echo "=== Building web ==="',
+  'cd /app && pnpm build:web',
+  'echo "=== Build Output ==="',
+  'ls -la /app/dist-web/ || echo "dist-web not found"',
+  'ls -la /app/server/dist/ || echo "server/dist not found"'
 ]
 
 [start]
-cmd = 'pwd && ls -la . && ls -la dist-web/ && node server/dist/main.js'
+cmd = 'cd /app && pwd && ls -la && ls -la dist-web/ && node server/dist/main.js'
