@@ -3,6 +3,9 @@ export default defineAppConfig({
     'pages/index/index',
     'pages/detail/index',
     'pages/profile/index',
+    'pages/history/index',
+    'pages/privacy/index',
+    'pages/feedback/index',
     'pages/webview/index'
   ],
   window: {

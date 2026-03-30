@@ -112,8 +112,40 @@ const DetailPage: FC = () => {
       const bookmarks = Taro.getStorageSync('bookmarks') || []
       const isExists = bookmarks.some((item: any) => item.id === detail.id)
       setIsBookmarked(isExists)
+      
+      // 添加到阅读历史
+      addToReadingHistory(detail)
     }
   }, [detail])
+
+  // 添加到阅读历史
+  const addToReadingHistory = (news: NewsDetail) => {
+    const history = Taro.getStorageSync('readingHistory') || []
+    // 移除已存在的记录
+    const filteredHistory = history.filter((item: any) => item.id !== news.id)
+    // 添加到最前面
+    const historyItem = {
+      id: news.id,
+      title: news.title,
+      source: news.source,
+      publishTime: news.publishTime,
+      category: news.category,
+      summary: news.summary,
+      readAt: new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+    filteredHistory.unshift(historyItem)
+    // 最多保留100条
+    if (filteredHistory.length > 100) {
+      filteredHistory.pop()
+    }
+    Taro.setStorageSync('readingHistory', filteredHistory)
+  }
 
   const fetchDetail = async (id: string) => {
     try {
