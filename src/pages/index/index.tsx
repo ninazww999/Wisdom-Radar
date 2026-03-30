@@ -519,19 +519,19 @@ const IndexPage: FC = () => {
     const sectionStyles = {
       hot: { 
         border: 'border-emerald-500', 
-        bg: 'bg-emerald-500 bg-opacity-10',
+        bg: 'bg-emerald-500 bg-opacity-5',
         icon: '💡',
         title: '行业启示'
       },
       policy: { 
         border: 'border-blue-500', 
-        bg: 'bg-blue-500 bg-opacity-10',
+        bg: 'bg-blue-500 bg-opacity-5',
         icon: '📊',
         title: '战略影响'
       },
       market: { 
         border: 'border-purple-500', 
-        bg: 'bg-purple-500 bg-opacity-10',
+        bg: 'bg-purple-500 bg-opacity-5',
         icon: '📈',
         title: '行业启示'
       }
@@ -585,7 +585,7 @@ const IndexPage: FC = () => {
         {/* 建议行动模块 - 卡片式设计 */}
         {news.recommendation && (
           <View className="px-4 pb-4">
-            <View className="bg-amber-500 bg-opacity-10 rounded-lg p-3 border-l-2 border-amber-500">
+            <View className="bg-amber-500 bg-opacity-5 rounded-lg p-3 border-l-2 border-amber-500">
               <View className="flex items-center gap-2 mb-2">
                 <Text className="text-base">🎯</Text>
                 <Text className="text-amber-400 text-sm font-semibold">建议行动</Text>
