@@ -6,17 +6,20 @@ import { join } from 'path';
 import * as fs from 'fs';
 
 function getPort(): number {
-  // Railway 会设置 PORT 环境变量
-  const envPort = process.env.PORT;
-  if (envPort) {
-    const port = parseInt(envPort, 10);
-    if (!isNaN(port) && port > 0 && port < 65536) {
-      console.log(`Using PORT from environment: ${port}`);
-      return port;
+  // 只有在 Railway 生产环境中才使用 PORT 环境变量
+  // 开发环境固定使用 3000 端口（前端使用 5000）
+  if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+    const envPort = process.env.PORT;
+    if (envPort) {
+      const port = parseInt(envPort, 10);
+      if (!isNaN(port) && port > 0 && port < 65536) {
+        console.log(`Using PORT from environment: ${port}`);
+        return port;
+      }
     }
   }
   
-  // 默认端口
+  // 开发环境默认端口
   console.log('Using default port: 3000');
   return 3000;
 }
