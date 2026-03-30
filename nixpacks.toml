@@ -1,27 +1,14 @@
 # Nixpacks 配置 - 用于 Railway 部署
+
 [phases.setup]
 nixPkgs = ['nodejs_20', 'pnpm']
 aptPkgs = ['build-essential', 'python3']
 
 [phases.install]
-cmds = [
-  'npm install -g pnpm@9', 
-  'pnpm install --no-frozen-lockfile'
-]
+cmds = ['npm install -g pnpm@9', 'pnpm install --no-frozen-lockfile']
 
 [phases.build]
-cmds = [
-  'echo "=== Current Directory ==="',
-  'pwd',
-  'ls -la',
-  'echo "=== Building Server ==="',
-  'pnpm --filter server build',
-  'echo "=== Building Web ==="',
-  'NODE_ENV=production pnpm build:web',
-  'echo "=== Verifying Build Output ==="',
-  'ls -la dist-web/',
-  'ls -la server/dist/'
-]
+cmds = ['pnpm build:railway']
 
 [start]
 cmd = 'ls -la dist-web/ && node server/dist/main.js'
