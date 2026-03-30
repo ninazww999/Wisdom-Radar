@@ -222,7 +222,7 @@ const IndexPage: FC = () => {
 
   // 渲染分组标题
   const renderSectionHeader = (title: string, subtitle: string, icon: React.ReactNode) => (
-    <View className="flex items-center gap-3 mb-3 px-4">
+    <View className="flex items-center gap-3 mb-5 px-4">
       <View className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center">
         {icon}
       </View>
@@ -267,7 +267,7 @@ const IndexPage: FC = () => {
         <View className="flex items-center justify-between mb-3">
           <View>
             <Text className="text-white text-xl font-bold">智界雷达</Text>
-            <Text className="text-neutral-500 text-sm mt-1">{getTodayDate()}</Text>
+            <Text className="text-neutral-500 text-sm mt-2">{getTodayDate()}</Text>
           </View>
           <View 
             className="w-9 h-9 rounded-full bg-neutral-900 flex items-center justify-center"
