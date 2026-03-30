@@ -7,7 +7,10 @@ aptPkgs = ['build-essential', 'python3']
 cmds = ['npm install -g pnpm@9', 'pnpm install --frozen-lockfile']
 
 [phases.build]
-cmds = ['pnpm build:server']
+cmds = [
+  'pnpm build:server',
+  'pnpm build:web'
+]
 
 [start]
 cmd = 'cd server && node dist/main.js'

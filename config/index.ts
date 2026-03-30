@@ -10,7 +10,12 @@ import devConfig from './dev';
 import prodConfig from './prod';
 import pkg from '../package.json';
 
+// 加载环境变量文件
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+// 生产环境额外加载 .env.production
+if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../.env.production') });
+}
 
 const generateTTProjectConfig = (outputRoot: string) => {
   const config = {
