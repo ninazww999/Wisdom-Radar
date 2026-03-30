@@ -134,47 +134,54 @@ const IndexPage: FC = () => {
     return `${year}年${month}月${date}日`
   }
 
-  // 渲染资讯卡片 - 统一样式
+  // 渲染资讯卡片 - 统一样式，内容与启示视觉分层
   const renderNewsCard = (news: NewsItem, section: 'hot' | 'policy' | 'market') => {
     const impactEmoji = news.impact === 'positive' ? '↗️' : news.impact === 'negative' ? '↘️' : '➖'
+    const sectionColor = section === 'hot' ? 'border-emerald-500' : section === 'policy' ? 'border-blue-500' : 'border-purple-500'
     
     return (
       <View 
         key={news.id} 
-        className="mb-3 bg-neutral-900 rounded-lg p-4"
+        className="mb-4 bg-neutral-900 rounded-xl overflow-hidden"
         onClick={() => handleNewsClick(news)}
       >
-        {/* 标题行 */}
-        <Text className="text-white font-bold text-base leading-relaxed block">
-          【{news.title}】
-        </Text>
-        <Text className="text-neutral-600 text-xs block mt-1 mb-3">
-          {news.publishTime} · {news.source}
-        </Text>
+        {/* 标题区域 */}
+        <View className="px-4 pt-4 pb-3">
+          <Text className="text-white font-bold text-base leading-relaxed block">
+            【{news.title}】
+          </Text>
+          <Text className="text-neutral-500 text-xs block mt-1">
+            {news.publishTime} · {news.source}
+          </Text>
+        </View>
         
-        {/* 核心内容 */}
+        {/* 核心内容模块 */}
         {news.coreContent && (
-          <View className="mb-3">
-            <Text className="text-neutral-300 text-sm leading-relaxed">
-              ·内容：{news.coreContent}
+          <View className="px-4 py-3 bg-neutral-800 bg-opacity-40">
+            <Text className="text-neutral-400 text-xs mb-1">· 内容</Text>
+            <Text className="text-neutral-200 text-sm leading-relaxed">
+              {news.coreContent}
             </Text>
           </View>
         )}
         
-        {/* 行业启示 / 战略影响 */}
+        {/* 行业启示 / 影响模块 */}
         {news.bawitonAnalysis && (
-          <View className="mb-2">
-            <Text className="text-neutral-300 text-sm leading-relaxed">
-              {section === 'hot' ? '·行业启示：' : `${impactEmoji} 影响：`}{news.bawitonAnalysis}
+          <View className={`px-4 py-3 border-l-2 ${sectionColor} bg-neutral-800 bg-opacity-20`}>
+            <Text className="text-neutral-400 text-xs mb-1">
+              {section === 'hot' ? '· 行业启示' : `${impactEmoji} 影响`}
+            </Text>
+            <Text className="text-neutral-100 text-sm leading-relaxed">
+              {news.bawitonAnalysis}
             </Text>
           </View>
         )}
         
-        {/* 行动建议 */}
+        {/* 行动建议模块 */}
         {news.recommendation && (
-          <View className="mt-2 bg-neutral-800 bg-opacity-50 rounded px-3 py-2">
-            <Text className="text-amber-400 text-xs font-medium">📌 建议：</Text>
-            <Text className="text-neutral-300 text-sm leading-relaxed">
+          <View className="mx-4 my-3 px-3 py-2 bg-amber-900 bg-opacity-20 rounded-lg border border-amber-800 border-opacity-50">
+            <Text className="text-amber-400 text-xs">📌 建议行动</Text>
+            <Text className="text-neutral-200 text-sm leading-relaxed mt-1 block">
               {news.recommendation}
             </Text>
           </View>
