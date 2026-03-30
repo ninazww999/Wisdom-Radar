@@ -28,22 +28,22 @@ export class NewsController {
     const searchClient = new SearchClient(new Config());
     const llmClient = new LLMClient(new Config());
     
-    // 三个维度的搜索关键词 - 强制包含具身智能/空间智能核心词
+    // 三个维度的搜索关键词 - 聚焦最新资讯，不限制年份
     const searchQueries = {
       hot: [
-        '具身智能 最新突破 发布 2025',
-        '人形机器人 产品发布 最新动态',
-        '空间智能 数字孪生 最新应用',
+        '具身智能 人形机器人 最新',
+        '空间智能 人工智能 最新进展',
+        '智能机器人 新产品 新技术',
       ],
       policy: [
-        '具身智能 国家政策 法规 2025',
-        '人形机器人 产业政策 指导意见',
-        '人工智能 空间智能 政策支持',
+        '具身智能 机器人 最新政策',
+        '人形机器人 产业规划 最新',
+        '人工智能 空间计算 政策动态',
       ],
       market: [
-        '具身智能 市场融资 投资 2025',
-        '人形机器人 商业化落地 应用',
-        '空间智能 智慧城市 项目落地',
+        '具身智能 机器人 融资 最新',
+        '人形机器人 商业化 最新动态',
+        '空间智能 市场 应用 最新',
       ],
     };
     
@@ -84,7 +84,10 @@ export class NewsController {
     const results = await Promise.all(searchPromises);
     const allItems = results.flatMap(r => r.web_items || []);
     
-    // 去重
+    // 计算7天前的时间戳
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    
+    // 去重并过滤
     const seenTitles = new Set<string>();
     const uniqueItems = allItems.filter(item => {
       if (!item.title) return false;
@@ -94,11 +97,33 @@ export class NewsController {
       return true;
     });
     
-    // 过滤相关性和质量
-    const filteredItems = uniqueItems.filter(item =>
-      this.isRelevantContent(item.title, item.snippet || '', item.site_name || '') &&
-      !this.isLowQuality(item.title, item.snippet || '', item.site_name || '')
-    );
+    // 过滤相关性、质量和时间（优先7天内，最长不超过30天）
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const filteredItems = uniqueItems.filter(item => {
+      // 相关性检查
+      if (!this.isRelevantContent(item.title, item.snippet || '', item.site_name || '')) {
+        return false;
+      }
+      // 质量检查
+      if (this.isLowQuality(item.title, item.snippet || '', item.site_name || '')) {
+        return false;
+      }
+      // 时间检查：优先7天内的，超过30天的排除
+      if (item.publish_time) {
+        const publishTime = new Date(item.publish_time).getTime();
+        if (publishTime < thirtyDaysAgo) {
+          return false;
+        }
+      }
+      return true;
+    });
+    
+    // 按时间排序，最新的在前
+    filteredItems.sort((a, b) => {
+      const timeA = a.publish_time ? new Date(a.publish_time).getTime() : 0;
+      const timeB = b.publish_time ? new Date(b.publish_time).getTime() : 0;
+      return timeB - timeA;
+    });
     
     // 转换为NewsItem
     return filteredItems.slice(0, 5).map((item, idx) => {
