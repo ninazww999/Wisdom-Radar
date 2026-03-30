@@ -1,6 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { FC } from 'react'
 import { TrendingUp, Globe, Briefcase } from 'lucide-react-taro'
 import { Network } from '@/network'
@@ -424,9 +424,9 @@ const IndexPage: FC = () => {
   const [loading, setLoading] = useState(true)
   const [dailyQuote] = useState(getDailyQuote)
   
-  // 记录上次刷新日期
-  const lastRefreshDateRef = { current: '' }
-  let hasCheckedToday = false
+  // 使用 useRef 持久化状态，避免组件重新渲染时丢失
+  const lastRefreshDateRef = useRef('')
+  const hasCheckedTodayRef = useRef(false)
 
   useLoad(() => {
     console.log('Index page loaded.')
@@ -445,11 +445,11 @@ const IndexPage: FC = () => {
     const today = getTodayDateStr()
     
     // 如果今天还没刷新过，则获取数据
-    if (lastRefreshDateRef.current !== today && !hasCheckedToday) {
+    if (lastRefreshDateRef.current !== today && !hasCheckedTodayRef.current) {
       console.log('[useDidShow] First visit today, fetching news...')
       fetchNews()
       lastRefreshDateRef.current = today
-      hasCheckedToday = true
+      hasCheckedTodayRef.current = true
     } else {
       console.log('[useDidShow] Already checked today, skip refresh')
       setLoading(false)
@@ -707,6 +707,17 @@ const IndexPage: FC = () => {
               <View className="px-4">
                 {newsData.market.map((item) => renderNewsCard(item, 'market'))}
               </View>
+            </View>
+          )}
+          
+          {/* 空状态提示 */}
+          {newsData.hot.length === 0 && newsData.policy.length === 0 && newsData.market.length === 0 && (
+            <View className="flex flex-col items-center justify-center py-20 px-4">
+              <View className="w-16 h-16 rounded-full bg-neutral-900 flex items-center justify-center mb-4">
+                <TrendingUp size={32} color="#525252" />
+              </View>
+              <Text className="text-neutral-500 text-sm mb-2">暂无资讯数据</Text>
+              <Text className="text-neutral-600 text-xs">请稍后再试</Text>
             </View>
           )}
         </View>
