@@ -32,8 +32,33 @@ const isSimilarTitle = (title1: string, title2: string): boolean => {
   // 完全相同
   if (t1 === t2) return true;
   
+  // 提取核心关键词（长度>2的词）
+  const extractKeywords = (text: string): Set<string> => {
+    const keywords = new Set<string>();
+    // 提取连续的中文字符作为关键词
+    const matches = text.match(/[\u4e00-\u9fa5]{2,}/g) || [];
+    matches.forEach(m => keywords.add(m));
+    return keywords;
+  };
+  
+  const keywords1 = extractKeywords(t1);
+  const keywords2 = extractKeywords(t2);
+  
+  // 关键词重叠度检查
+  const commonKeywords = [...keywords1].filter(k => keywords2.has(k));
+  const maxKeywords = Math.max(keywords1.size, keywords2.size);
+  
+  // 如果超过50%的关键词重叠，视为重复
+  if (maxKeywords > 0 && commonKeywords.length / maxKeywords > 0.5) {
+    return true;
+  }
+  
   // 一个是另一个的子串
-  if (t1.includes(t2) || t2.includes(t1)) return true;
+  if (t1.length > 10 && t2.length > 10) {
+    if (t1.includes(t2.slice(0, -5)) || t2.includes(t1.slice(0, -5))) {
+      return true;
+    }
+  }
   
   // 计算相似度（Jaccard相似度）
   const chars1 = new Set(t1.split(''));
@@ -42,7 +67,7 @@ const isSimilarTitle = (title1: string, title2: string): boolean => {
   const union = new Set([...chars1, ...chars2]);
   const similarity = intersection.size / union.size;
   
-  return similarity > 0.7; // 70%以上相似度视为重复
+  return similarity > 0.6; // 60%以上相似度视为重复
 };
 
 @Controller('news')
@@ -65,22 +90,22 @@ export class NewsController {
     // 清空全局去重集合
     globalSeenTitles.clear();
     
-    // 三个维度的搜索关键词 - 覆盖具身智能和空间智能，严格区分避免重复
+    // 三个维度的搜索关键词 - 覆盖具身智能和空间智能
     const searchQueries = {
       hot: [
-        '具身智能 人形机器人 技术突破 新产品',
-        '空间智能 数字孪生 三维视觉 最新进展',
-        '具身智能 机器人感知 运动控制 创新',
+        '具身智能 最新',
+        '人形机器人 技术',
+        '空间智能 应用',
       ],
       policy: [
-        '具身智能 人形机器人 国家政策 国务院 工信部',
-        '具身智能 地方政策 产业扶持 北京 上海 深圳',
-        '空间智能 数字孪生 政策规划 政府工作报告',
+        '具身智能 政策',
+        '人形机器人 规划',
+        '空间智能 发展',
       ],
       market: [
-        '特斯拉机器人 Figure 优必选 宇树科技 智元机器人 市场动态',
-        '具身智能 人形机器人 头部企业 融资 商业化进展',
-        '空间智能 数字孪生 行业巨头 市场布局 应用落地',
+        '人形机器人 融资',
+        '具身智能 投资',
+        '机器人 产业',
       ],
     };
     
@@ -118,7 +143,7 @@ export class NewsController {
     section: string
   ): Promise<NewsItem[]> {
     const searchPromises = queries.map(query =>
-      searchClient.webSearch(query, 10).catch(err => {
+      searchClient.webSearch(query, 15).catch(err => {
         console.error('Search error:', err);
         return { web_items: [] };
       })
@@ -309,8 +334,25 @@ export class NewsController {
     const excludeKeywords = [
       '是什么', '什么是', '概念', '科普', '入门', '基础',
       '百科', '词条', 'wiki', '知乎', '知道', '问答',
+      '_标签_', '_出品', '标签：', '标签:', '专题',
+      '排行榜', '榜单', '排名', '必看', '推荐阅读',
     ];
-    return excludeKeywords.some(k => text.includes(k)) || title.length < 10;
+    
+    // 标题长度检查
+    if (title.length < 10) return true;
+    
+    // 无效标题模式检查
+    const invalidPatterns = [
+      /^robotics/i,
+      /_标签_/i,
+      /_出品$/i,
+      /^标签[：:]/,
+      /^[【\[]?专题[】\]]?/,
+    ];
+    
+    if (invalidPatterns.some(p => p.test(title))) return true;
+    
+    return excludeKeywords.some(k => text.includes(k));
   }
   
   // 清理标题
