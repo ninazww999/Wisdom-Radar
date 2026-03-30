@@ -39,11 +39,18 @@ async function bootstrap() {
   console.log('Current working directory:', process.cwd());
   console.log('__dirname:', __dirname);
   
+  // 获取 server 目录的绝对路径（server/dist 的上级目录）
+  const serverDir = join(__dirname, '..');
+  const projectRoot = join(serverDir, '..');
+  
+  console.log('Server dir:', serverDir);
+  console.log('Project root:', projectRoot);
+  
   // 尝试多个可能的路径
   const possiblePaths = [
-    join(process.cwd(), 'dist-web'),          // Railway 构建
-    join(__dirname, '..', '..', 'dist-web'),  // 相对于 server/dist
-    join(__dirname, '..', 'dist-web'),        // 相对于 server/dist
+    join(projectRoot, 'dist-web'),           // 项目根目录下的 dist-web
+    join(process.cwd(), 'dist-web'),         // 当前工作目录
+    '/app/dist-web',                          // Railway 默认路径
   ];
   
   let staticPath = '';
