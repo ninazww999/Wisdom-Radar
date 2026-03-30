@@ -11,17 +11,17 @@ cmds = [
 
 [phases.build]
 cmds = [
-  'echo "=== Build Environment ==="',
+  'echo "=== Current Directory ==="',
   'pwd',
   'ls -la',
-  'echo "=== Building server ==="',
-  'cd /app/server && pnpm build',
-  'echo "=== Building web ==="',
-  'cd /app && pnpm build:web',
-  'echo "=== Build Output ==="',
-  'ls -la /app/dist-web/ || echo "dist-web not found"',
-  'ls -la /app/server/dist/ || echo "server/dist not found"'
+  'echo "=== Building Server ==="',
+  'pnpm --filter server build',
+  'echo "=== Building Web ==="',
+  'NODE_ENV=production pnpm build:web',
+  'echo "=== Verifying Build Output ==="',
+  'ls -la dist-web/',
+  'ls -la server/dist/'
 ]
 
 [start]
-cmd = 'cd /app && pwd && ls -la && ls -la dist-web/ && node server/dist/main.js'
+cmd = 'ls -la dist-web/ && node server/dist/main.js'

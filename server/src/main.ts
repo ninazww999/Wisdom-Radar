@@ -36,6 +36,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // 服务前端静态文件（H5 小程序）
+  console.log('=== Static File Detection ===');
   console.log('Current working directory:', process.cwd());
   console.log('__dirname:', __dirname);
   
@@ -46,22 +47,28 @@ async function bootstrap() {
   console.log('Server dir:', serverDir);
   console.log('Project root:', projectRoot);
   
-  // 尝试多个可能的路径
+  // 尝试多个可能的路径（按优先级排序）
   const possiblePaths = [
-    join(projectRoot, 'dist-web'),           // 项目根目录下的 dist-web
-    join(process.cwd(), 'dist-web'),         // 当前工作目录
-    '/app/dist-web',                          // Railway 默认路径
+    '/app/dist-web',                           // Railway Docker 默认路径
+    join(process.cwd(), 'dist-web'),           // 当前工作目录
+    join(projectRoot, 'dist-web'),             // 项目根目录下的 dist-web
+    join(__dirname, '..', '..', 'dist-web'),   // 相对于 server/dist
   ];
   
   let staticPath = '';
   for (const path of possiblePaths) {
-    console.log(`Checking static path: ${path}, exists: ${fs.existsSync(path)}`);
-    if (fs.existsSync(path)) {
-      const files = fs.readdirSync(path);
-      console.log(`Files in ${path}:`, files.slice(0, 10));
-      staticPath = path;
-      console.log(`✓ Found static files at: ${path}`);
-      break;
+    const exists = fs.existsSync(path);
+    console.log(`Checking: ${path} -> exists: ${exists}`);
+    if (exists) {
+      try {
+        const files = fs.readdirSync(path);
+        console.log(`Files in ${path}:`, files.slice(0, 5));
+        staticPath = path;
+        console.log(`✓ Using static path: ${path}`);
+        break;
+      } catch (e) {
+        console.log(`Failed to read ${path}:`, e);
+      }
     }
   }
   
