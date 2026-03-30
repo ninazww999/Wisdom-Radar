@@ -4,33 +4,10 @@ import * as express from 'express';
 import { HttpStatusInterceptor } from '@/interceptors/http-status.interceptor';
 
 function getPort(): number {
-  // 后端专用端口环境变量（优先级最高）
-  const serverPort = process.env.SERVER_PORT;
-  if (serverPort) {
-    const port = parseInt(serverPort, 10);
-    if (!isNaN(port) && port > 0 && port < 65536) {
-      return port;
-    }
-  }
-  
-  // Railway 会设置 PORT 环境变量（生产环境）
-  // 但在开发环境中，PORT 被设置为前端端口，所以需要区分
-  const isDev = process.env.NODE_ENV !== 'production';
-  if (!isDev) {
-    const envPort = process.env.PORT;
-    if (envPort) {
-      const port = parseInt(envPort, 10);
-      if (!isNaN(port) && port > 0 && port < 65536) {
-        return port;
-      }
-    }
-  }
-  
-  // 命令行参数 -p
-  const args = process.argv.slice(2);
-  const portIndex = args.indexOf('-p');
-  if (portIndex !== -1 && args[portIndex + 1]) {
-    const port = parseInt(args[portIndex + 1], 10);
+  // Railway 会设置 PORT 环境变量
+  const envPort = process.env.PORT;
+  if (envPort) {
+    const port = parseInt(envPort, 10);
     if (!isNaN(port) && port > 0 && port < 65536) {
       return port;
     }
@@ -53,22 +30,14 @@ async function bootstrap() {
 
   // 全局拦截器：统一将 POST 请求的 201 状态码改为 200
   app.useGlobalInterceptors(new HttpStatusInterceptor());
-  // 1. 开启优雅关闭 Hooks (关键!)
+  
+  // 开启优雅关闭
   app.enableShutdownHooks();
 
-  // 2. 解析端口
+  // 获取端口并启动
   const port = getPort();
-  try {
-    await app.listen(port);
-    console.log(`Server running on port ${port}`);
-  } catch (err) {
-    if (err.code === 'EADDRINUSE') {
-      console.error(`端口 ${port} 被占用!`);
-      process.exit(1);
-    } else {
-      throw err;
-    }
-  }
-  console.log(`Application is running on port: ${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Server running on port ${port}`);
+  console.log(`Health check available at: http://localhost:${port}/api/health`);
 }
 bootstrap();
