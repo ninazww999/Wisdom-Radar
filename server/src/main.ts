@@ -3,6 +3,7 @@ import { AppModule } from '@/app.module';
 import * as express from 'express';
 import { HttpStatusInterceptor } from '@/interceptors/http-status.interceptor';
 import { join } from 'path';
+import * as fs from 'fs';
 
 function getPort(): number {
   // Railway 会设置 PORT 环境变量
@@ -30,8 +31,29 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // 服务前端静态文件（H5 小程序）
-  const staticPath = join(__dirname, '..', '..', 'dist-web');
-  app.use(express.static(staticPath));
+  // 尝试多个可能的路径
+  const possiblePaths = [
+    join(__dirname, '..', '..', 'dist-web'),  // Railway 构建
+    join(__dirname, '..', 'dist-web'),        // 相对于 server/dist
+    join(process.cwd(), 'dist-web'),          // 当前工作目录
+  ];
+  
+  let staticPath = '';
+  for (const path of possiblePaths) {
+    console.log(`Checking static path: ${path}`);
+    if (fs.existsSync(path)) {
+      staticPath = path;
+      console.log(`Found static files at: ${path}`);
+      break;
+    }
+  }
+  
+  if (staticPath) {
+    app.use(express.static(staticPath));
+    console.log(`Serving static files from: ${staticPath}`);
+  } else {
+    console.warn('Warning: Static files directory not found');
+  }
 
   // 全局拦截器：统一将 POST 请求的 201 状态码改为 200
   app.useGlobalInterceptors(new HttpStatusInterceptor());
@@ -44,6 +66,5 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   console.log(`Server running on port ${port}`);
   console.log(`Health check available at: http://localhost:${port}/api/health`);
-  console.log(`Frontend available at: http://localhost:${port}/`);
 }
 bootstrap();
