@@ -62,11 +62,46 @@ const isSimilarTitle = (title1: string, title2: string): boolean => {
     ['投资', '轮'],
     ['告别', '实用'],
     ['走向', '实用'],
+    ['人形机器人', '标准'],
+    ['首个', '标准'],
+    ['国家级', '标准'],
+    ['标准', '体系'],
+    ['标准', '落地'],
+    ['具身智能', '标准'],
+    ['估值', '百亿'],
+    ['融资', '亿'],
   ];
   
   for (const group of conceptGroups) {
     const bothHave = group.every(word => t1.includes(word)) && group.every(word => t2.includes(word));
     if (bothHave) {
+      return true;
+    }
+  }
+  
+  // 核心实体检查：如果两个标题都包含"标准"且都包含"人形机器人"或"具身智能"
+  // 先标准化"国标"为"标准"
+  const normalizedT1 = t1.replace(/国标/g, '标准');
+  const normalizedT2 = t2.replace(/国标/g, '标准');
+  
+  const coreEntities = ['人形机器人', '具身智能', '空间智能'];
+  const hasCoreEntity1 = coreEntities.some(e => normalizedT1.includes(e));
+  const hasCoreEntity2 = coreEntities.some(e => normalizedT2.includes(e));
+  
+  if (normalizedT1.includes('标准') && normalizedT2.includes('标准') && hasCoreEntity1 && hasCoreEntity2) {
+    // 检查是否都是关于"标准发布/落地"的新闻事件
+    // 只有当两个标题都提到"发布"、"落地"、"出台"等动作词时才去重
+    const actionWords = ['发布', '落地', '出台', '出炉', '印发'];
+    const t1HasAction = actionWords.some(k => normalizedT1.includes(k));
+    const t2HasAction = actionWords.some(k => normalizedT2.includes(k));
+    
+    if (t1HasAction && t2HasAction) {
+      return true;
+    }
+    
+    // 或者都提到"首个"+"体系"
+    if ((normalizedT1.includes('首个') && normalizedT2.includes('首个')) ||
+        (normalizedT1.includes('体系') && normalizedT2.includes('体系'))) {
       return true;
     }
   }
@@ -80,6 +115,16 @@ const isSimilarTitle = (title1: string, title2: string): boolean => {
   
   if (similarity > 0.5) {
     return true;
+  }
+  
+  // 标题核心部分相同检查（处理"北京亦庄启动..."和"30余款产品亮相...北京亦庄启动..."这种情况）
+  // 提取标题前15个字符作为核心部分
+  if (t1.length > 15 && t2.length > 15) {
+    const core1 = t1.slice(0, 15);
+    const core2 = t2.slice(0, 15);
+    if (t1.includes(core2) || t2.includes(core1)) {
+      return true;
+    }
   }
   
   return false;
