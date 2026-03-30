@@ -251,6 +251,24 @@ const DetailPage: FC = () => {
     })
   }
 
+  // 点击相关推荐新闻
+  const handleRelatedNewsClick = (news: { id: string; title: string; source: string; publishTime: string }) => {
+    // 存储新闻信息到 Storage，供详情页使用
+    Taro.setStorageSync('currentNews', {
+      id: news.id,
+      title: news.title,
+      source: news.source,
+      publishTime: news.publishTime,
+      summary: news.title, // 用标题作为摘要
+      category: 'industry' // 默认分类
+    })
+    
+    // 跳转到详情页
+    Taro.navigateTo({
+      url: `/pages/detail/index?id=${news.id}`
+    })
+  }
+
   if (loading) {
     return (
       <View className="min-h-screen bg-black">
@@ -397,7 +415,11 @@ const DetailPage: FC = () => {
           <View className="mt-6 pt-6 border-t border-neutral-900">
             <Text className="text-white font-medium mb-4">相关推荐</Text>
             {detail.relatedNews.map((news, idx) => (
-              <Card key={idx} className="mb-3 bg-neutral-900 border-neutral-800 rounded-xl overflow-hidden">
+              <Card 
+                key={idx} 
+                className="mb-3 bg-neutral-900 border-neutral-800 rounded-xl overflow-hidden"
+                onClick={() => handleRelatedNewsClick(news)}
+              >
                 <CardContent className="py-4 px-4">
                   <Text className="text-neutral-200 text-sm mb-2 leading-relaxed">{news.title}</Text>
                   <View className="flex items-center gap-2">
