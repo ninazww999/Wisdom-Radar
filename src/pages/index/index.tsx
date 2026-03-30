@@ -134,9 +134,8 @@ const IndexPage: FC = () => {
     return `${year}年${month}月${date}日`
   }
 
-  // 渲染资讯卡片 - 统一样式，内容与启示视觉分层
+  // 渲染资讯卡片 - 内容与启示分行显示，带小标题
   const renderNewsCard = (news: NewsItem, section: 'hot' | 'policy' | 'market') => {
-    const impactEmoji = news.impact === 'positive' ? '↗️' : news.impact === 'negative' ? '↘️' : '➖'
     const sectionColor = section === 'hot' ? 'border-emerald-500' : section === 'policy' ? 'border-blue-500' : 'border-purple-500'
     
     return (
@@ -155,22 +154,20 @@ const IndexPage: FC = () => {
           </Text>
         </View>
         
-        {/* 核心内容模块 */}
+        {/* 内容模块 */}
         {news.coreContent && (
-          <View className="px-4 py-3 bg-neutral-800 bg-opacity-40">
-            <Text className="text-neutral-400 text-xs mb-1">· 内容</Text>
+          <View className="px-4 py-3 border-t border-neutral-800">
+            <Text className="text-neutral-500 text-xs mb-2">内容</Text>
             <Text className="text-neutral-200 text-sm leading-relaxed">
               {news.coreContent}
             </Text>
           </View>
         )}
         
-        {/* 行业启示 / 影响模块 */}
+        {/* 行业启示模块 */}
         {news.bawitonAnalysis && (
-          <View className={`px-4 py-3 border-l-2 ${sectionColor} bg-neutral-800 bg-opacity-20`}>
-            <Text className="text-neutral-400 text-xs mb-1">
-              {section === 'hot' ? '· 行业启示' : `${impactEmoji} 影响`}
-            </Text>
+          <View className={`px-4 py-3 border-t border-neutral-800 border-l-2 ${sectionColor}`}>
+            <Text className="text-neutral-500 text-xs mb-2">行业启示</Text>
             <Text className="text-neutral-100 text-sm leading-relaxed">
               {news.bawitonAnalysis}
             </Text>
@@ -179,9 +176,9 @@ const IndexPage: FC = () => {
         
         {/* 行动建议模块 */}
         {news.recommendation && (
-          <View className="mx-4 my-3 px-3 py-2 bg-amber-900 bg-opacity-20 rounded-lg border border-amber-800 border-opacity-50">
-            <Text className="text-amber-400 text-xs">📌 建议行动</Text>
-            <Text className="text-neutral-200 text-sm leading-relaxed mt-1 block">
+          <View className="px-4 py-3 border-t border-neutral-800">
+            <Text className="text-amber-400 text-xs mb-2">📌 建议行动</Text>
+            <Text className="text-neutral-200 text-sm leading-relaxed">
               {news.recommendation}
             </Text>
           </View>

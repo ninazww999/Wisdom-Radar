@@ -2,7 +2,6 @@ export default defineAppConfig({
   pages: [
     'pages/index/index',
     'pages/detail/index',
-    'pages/analysis/index',
     'pages/profile/index',
     'pages/webview/index'
   ],
@@ -23,12 +22,6 @@ export default defineAppConfig({
         text: '首页',
         iconPath: './assets/tabbar/house.png',
         selectedIconPath: './assets/tabbar/house-active.png'
-      },
-      {
-        pagePath: 'pages/analysis/index',
-        text: '分析',
-        iconPath: './assets/tabbar/trending-up.png',
-        selectedIconPath: './assets/tabbar/trending-up-active.png'
       },
       {
         pagePath: 'pages/profile/index',
