@@ -136,7 +136,27 @@ const IndexPage: FC = () => {
 
   // 渲染资讯卡片 - 内容与启示分行显示，带小标题
   const renderNewsCard = (news: NewsItem, section: 'hot' | 'policy' | 'market') => {
-    const sectionColor = section === 'hot' ? 'border-emerald-500' : section === 'policy' ? 'border-blue-500' : 'border-purple-500'
+    const sectionStyles = {
+      hot: { 
+        border: 'border-emerald-500', 
+        bg: 'bg-emerald-500/10',
+        icon: '💡',
+        title: '行业启示'
+      },
+      policy: { 
+        border: 'border-blue-500', 
+        bg: 'bg-blue-500/10',
+        icon: '📊',
+        title: '战略影响'
+      },
+      market: { 
+        border: 'border-purple-500', 
+        bg: 'bg-purple-500/10',
+        icon: '📈',
+        title: '行业启示'
+      }
+    }
+    const style = sectionStyles[section]
     
     return (
       <View 
@@ -156,31 +176,44 @@ const IndexPage: FC = () => {
         
         {/* 内容模块 */}
         {news.coreContent && (
-          <View className="px-4 py-3 border-t border-neutral-800">
-            <Text className="block text-neutral-500 text-xs mb-2">内容</Text>
+          <View className="px-4 pb-4 pt-1">
+            <View className="flex items-center gap-2 mb-2">
+              <View className="w-1 h-4 bg-neutral-500 rounded-full" />
+              <Text className="text-neutral-400 text-sm font-medium">内容</Text>
+            </View>
             <Text className="block text-neutral-200 text-sm leading-relaxed">
               {news.coreContent}
             </Text>
           </View>
         )}
         
-        {/* 行业启示模块 */}
+        {/* 行业启示模块 - 卡片式设计 */}
         {news.bawitonAnalysis && (
-          <View className={`px-4 py-3 border-t border-neutral-800 border-l-2 ${sectionColor}`}>
-            <Text className="block text-neutral-500 text-xs mb-2">行业启示</Text>
-            <Text className="block text-neutral-100 text-sm leading-relaxed">
-              {news.bawitonAnalysis}
-            </Text>
+          <View className="px-4 pb-4">
+            <View className={`${style.bg} rounded-lg p-3 border-l-2 ${style.border}`}>
+              <View className="flex items-center gap-2 mb-2">
+                <Text className="text-base">{style.icon}</Text>
+                <Text className="text-white text-sm font-semibold">{style.title}</Text>
+              </View>
+              <Text className="block text-neutral-200 text-sm leading-relaxed">
+                {news.bawitonAnalysis}
+              </Text>
+            </View>
           </View>
         )}
         
-        {/* 行动建议模块 */}
+        {/* 建议行动模块 - 卡片式设计 */}
         {news.recommendation && (
-          <View className="px-4 py-3 border-t border-neutral-800">
-            <Text className="block text-amber-400 text-xs mb-2">📌 建议行动</Text>
-            <Text className="block text-neutral-200 text-sm leading-relaxed">
-              {news.recommendation}
-            </Text>
+          <View className="px-4 pb-4">
+            <View className="bg-amber-500/10 rounded-lg p-3 border-l-2 border-amber-500">
+              <View className="flex items-center gap-2 mb-2">
+                <Text className="text-base">🎯</Text>
+                <Text className="text-amber-400 text-sm font-semibold">建议行动</Text>
+              </View>
+              <Text className="block text-neutral-200 text-sm leading-relaxed">
+                {news.recommendation}
+              </Text>
+            </View>
           </View>
         )}
       </View>
