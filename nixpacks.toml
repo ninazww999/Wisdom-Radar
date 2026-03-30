@@ -1,0 +1,13 @@
+# Nixpacks 配置 - 用于 Railway 部署
+[phases.setup]
+nixPkgs = ['nodejs_20', 'pnpm']
+aptPkgs = ['build-essential', 'python3']
+
+[phases.install]
+cmds = ['npm install -g pnpm@9', 'pnpm install --frozen-lockfile']
+
+[phases.build]
+cmds = ['pnpm build:server']
+
+[start]
+cmd = 'cd server && node dist/main.js'

@@ -1,0 +1,15 @@
+# 忽略不需要部署的文件
+node_modules
+dist-web
+dist-weapp
+dist-tt
+.git
+.github
+.gitignore
+*.md
+!README.md
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db

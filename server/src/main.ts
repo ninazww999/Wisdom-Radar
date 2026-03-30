@@ -3,7 +3,17 @@ import { AppModule } from '@/app.module';
 import * as express from 'express';
 import { HttpStatusInterceptor } from '@/interceptors/http-status.interceptor';
 
-function parsePort(): number {
+function getPort(): number {
+  // Railway 会设置 PORT 环境变量
+  const envPort = process.env.PORT;
+  if (envPort) {
+    const port = parseInt(envPort, 10);
+    if (!isNaN(port) && port > 0 && port < 65536) {
+      return port;
+    }
+  }
+  
+  // 命令行参数 -p
   const args = process.argv.slice(2);
   const portIndex = args.indexOf('-p');
   if (portIndex !== -1 && args[portIndex + 1]) {
@@ -12,6 +22,8 @@ function parsePort(): number {
       return port;
     }
   }
+  
+  // 默认端口
   return 3000;
 }
 
@@ -32,18 +44,18 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // 2. 解析端口
-  const port = parsePort();
+  const port = getPort();
   try {
     await app.listen(port);
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Server running on port ${port}`);
   } catch (err) {
     if (err.code === 'EADDRINUSE') {
-      console.error(`❌ 端口 \({port} 被占用! 请运行 'npx kill-port \){port}' 然后重试。`);
+      console.error(`端口 ${port} 被占用!`);
       process.exit(1);
     } else {
       throw err;
     }
   }
-  console.log(`Application is running on: http://localhost:3000`);
+  console.log(`Application is running on port: ${port}`);
 }
 bootstrap();
