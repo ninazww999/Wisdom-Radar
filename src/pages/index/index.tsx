@@ -1,9 +1,9 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useLoad, useDidShow, usePullDownRefresh, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
-import { useState, useRef } from 'react'
+import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import { useState } from 'react'
 import type { FC } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, TrendingUp, Globe, Briefcase } from 'lucide-react-taro'
+import { TrendingUp, Globe, Briefcase } from 'lucide-react-taro'
 import { Network } from '@/network'
 import './index.css'
 
@@ -45,11 +45,11 @@ const getDailyQuote = () => {
 const IndexPage: FC = () => {
   const [newsData, setNewsData] = useState<NewsResponse>({ hot: [], policy: [], market: [] })
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [dailyQuote] = useState(getDailyQuote)
   
-  const lastRefreshDateRef = useRef<string>('')
-  const hasDataRef = useRef(false)  // 追踪是否已有数据
+  // 记录上次刷新日期
+  const lastRefreshDateRef = { current: '' }
+  let hasCheckedToday = false
 
   useLoad(() => {
     console.log('Index page loaded.')
@@ -63,18 +63,18 @@ const IndexPage: FC = () => {
     return `${year}-${month}-${date}`
   }
 
+  // 只在每天首次加载时获取数据
   useDidShow(() => {
-    // 每次显示页面时检查是否需要刷新数据
     const today = getTodayDateStr()
     
-    // 如果是新的一天，或者没有数据，则刷新
-    if (lastRefreshDateRef.current !== today || !hasDataRef.current) {
-      console.log('[useDidShow] Refreshing news...', { today, hasData: hasDataRef.current, lastRefresh: lastRefreshDateRef.current })
+    // 如果今天还没刷新过，则获取数据
+    if (lastRefreshDateRef.current !== today && !hasCheckedToday) {
+      console.log('[useDidShow] First visit today, fetching news...')
       fetchNews()
       lastRefreshDateRef.current = today
+      hasCheckedToday = true
     } else {
-      console.log('[useDidShow] Data exists, skip refresh')
-      // 确保不显示 loading 状态
+      console.log('[useDidShow] Already checked today, skip refresh')
       setLoading(false)
     }
   })
@@ -90,11 +90,6 @@ const IndexPage: FC = () => {
     query: '',
     imageUrl: '/assets/share-cover.png'
   }))
-
-  usePullDownRefresh(async () => {
-    await handleRefresh()
-    Taro.stopPullDownRefresh()
-  })
 
   const fetchNews = async () => {
     try {
@@ -116,24 +111,15 @@ const IndexPage: FC = () => {
           policy: data.policy || [],
           market: data.market || []
         })
-        hasDataRef.current = true  // 标记已有数据
         lastRefreshDateRef.current = getTodayDateStr()
       } else {
         console.warn('[Fetch News] No data in response:', response)
-        // 保持原有数据，不清空
       }
     } catch (error) {
       console.error('[Fetch News] Error:', error)
-      // 出错时保持原有数据，不清空
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
-  }
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    await fetchNews()
   }
 
   const handleNewsClick = (news: NewsItem) => {
@@ -281,17 +267,9 @@ const IndexPage: FC = () => {
         }}
         className="px-4 pt-10 pb-4"
       >
-        <View className="flex items-center justify-between mb-3">
-          <View className="flex flex-col gap-2">
-            <Text className="text-white text-xl font-bold">智界雷达</Text>
-            <Text className="text-neutral-500 text-sm">{getTodayDate()}</Text>
-          </View>
-          <View 
-            className="w-9 h-9 rounded-full bg-neutral-900 flex items-center justify-center"
-            onClick={handleRefresh}
-          >
-            <RefreshCw size={16} color="#a3a3a3" className={refreshing ? 'animate-spin' : ''} />
-          </View>
+        <View className="flex flex-col gap-2">
+          <Text className="text-white text-xl font-bold">智界雷达</Text>
+          <Text className="text-neutral-500 text-sm">{getTodayDate()}</Text>
         </View>
         
         {/* 系统说明 */}
@@ -346,11 +324,6 @@ const IndexPage: FC = () => {
               </View>
             </View>
           )}
-
-          {/* 底部提示 */}
-          <View className="text-center py-6">
-            <Text className="text-neutral-600 text-xs">— 下拉刷新获取最新资讯 —</Text>
-          </View>
         </View>
       )}
     </View>
